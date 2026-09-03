@@ -29,7 +29,8 @@
     "db:studio": "prisma studio",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
     "ingest": "tsx scripts/ingest.ts",
-    "seed": "tsx scripts/seed.ts"
+    "seed": "tsx scripts/seed.ts",
+    "lighthouse": "lhci autorun"
   },
   "dependencies": {
     "@neondatabase/serverless": "1.1.0",
@@ -45,6 +46,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.1",
+    "@lhci/cli": "0.15.1",
     "@playwright/test": "1.62.1",
     "@types/node": "22.19.2",
     "@types/pg": "8.23.1",

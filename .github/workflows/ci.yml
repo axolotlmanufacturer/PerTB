@@ -149,3 +149,62 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  lighthouse:
+    name: Lighthouse budget
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # Core Web Vitals are an SEO property on a site whose whole business model
+    # is organic search, so the budget fails the build rather than warning.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: perterabyte
+          POSTGRES_PASSWORD: perterabyte
+          POSTGRES_DB: perterabyte
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U perterabyte -d perterabyte"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://perterabyte:perterabyte@localhost:5432/perterabyte
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations
+        run: pnpm db:deploy
+
+      - name: Seed the table
+        run: pnpm ingest
+
+      - name: Build
+        run: pnpm build
+
+      # LCP < 1.8s, CLS < 0.05, TBT < 200ms (the lab proxy for INP).
+      - name: Lighthouse
+        run: pnpm lighthouse
+
+      - name: Upload Lighthouse report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/
+          retention-days: 7

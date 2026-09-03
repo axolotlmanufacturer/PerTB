@@ -13,6 +13,8 @@
   --fg-muted: #5b6470;
   --border: #d9dde2;
   --accent: #0b5fff;
+  --floor: #0a7f3f;
+  --warn: #b8860b;
 
   --mono:
     ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
@@ -27,6 +29,8 @@
     --fg-muted: #98a2ae;
     --border: #2a313a;
     --accent: #5c9dff;
+    --floor: #3ddc84;
+    --warn: #e0a83a;
   }
 }
 

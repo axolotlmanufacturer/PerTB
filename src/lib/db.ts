@@ -52,11 +52,32 @@ function createClient(): PrismaClient {
   });
 }
 
-export const prisma: PrismaClient = globalForPrisma.prisma ?? createClient();
+function getClient(): PrismaClient {
+  const existing = globalForPrisma.prisma;
+  if (existing) return existing;
 
-if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma;
+  // One client per process: the HMR singleton in dev, and one per lambda in
+  // production, which is what the Neon adapter expects.
+  const created = createClient();
+  globalForPrisma.prisma = created;
+  return created;
 }
+
+/**
+ * Constructed LAZILY, on first actual use.
+ *
+ * `next build` collects page data by importing every route module. Building
+ * the client at import time made the whole build require a live DATABASE_URL —
+ * a build should not need a database, and on Vercel the connection string is a
+ * runtime secret rather than a build input.
+ */
+export const prisma: PrismaClient = new Proxy({} as PrismaClient, {
+  get(_target, property, receiver) {
+    const client = getClient();
+    const value = Reflect.get(client, property, receiver) as unknown;
+    return typeof value === 'function' ? value.bind(client) : value;
+  },
+});
 
 /**
  * THE 24-HOUR RULE, as a reusable predicate.

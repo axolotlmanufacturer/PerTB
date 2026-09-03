@@ -45,7 +45,7 @@
     "vitest": "4.1.11"
   },
   "pnpm": {
-    "onlyBuiltDependencies": [],
-    "ignoredBuiltDependencies": ["@sentry/cli", "unrs-resolver"]
+    "ignoredBuiltDependencies": ["@sentry/cli", "unrs-resolver"],
+    "onlyBuiltDependencies": []
   }
 }

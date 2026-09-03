@@ -146,8 +146,8 @@ Phased, with a review checkpoint at the end of each phase.
 | 0     | Repository and guardrails                              | **complete** |
 | 1     | Domain core — taxonomy, normalisation, pricing, schema | **complete** |
 | 2     | Ingest — adapters, affiliate links, sweep              | **complete** |
-| 3     | The table — facets, duplicate collapse, dispersion     | next         |
-| 4     | SEO surface — ~40 curated landing routes               | planned      |
+| 3     | The table — facets, duplicate collapse, dispersion     | **complete** |
+| 4     | SEO surface — ~40 curated landing routes               | next         |
 | 5     | Price history and shucking                             | planned      |
 | 6     | Deal alerts                                            | planned      |
 | 7     | Editorial, admin and compliance                        | planned      |
@@ -177,6 +177,16 @@ default. Browser-side error reporting needs the DSN inlined into the client
 bundle at build time, which requires the `NEXT_PUBLIC_` prefix; the brief's
 `SENTRY_DSN` covers the server and edge runtimes only. Leave it unset to report
 from the server alone.
+
+**Amazon Creators API transport.** The brief gives the auth URL and the
+OffersV2 requirement but not the endpoint. The Creators API turns out to be a
+new _endpoint for the PA-API operations_ rather than a differently-shaped API:
+`POST https://creatorsapi.amazon/catalog/v1/searchItems`, marketplace routed by
+an `x-marketplace` header, `Authorization: Bearer <token>, Version <n>`, and
+lowerCamelCase fields where PA-API used PascalCase. A request must name the
+`resources` it wants or the response carries neither titles nor offers. Two
+values remain unverifiable without credentials and are env-overridable:
+`AMAZON_CREDENTIAL_VERSION` and the optional `AMAZON_OAUTH_SCOPE`.
 
 **Golden corpus provenance.** The brief asks for the corpus to be expanded from
 real Amazon and eBay listing titles. The titles in `test/fixtures/titles.json`

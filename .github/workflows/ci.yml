@@ -83,6 +83,28 @@ jobs:
     name: Build and e2e
     runs-on: ubuntu-latest
     timeout-minutes: 20
+
+    # The table is server-rendered from the database, so the e2e suite needs a
+    # populated one. Seeded from the mock adapter: no credentials, and the same
+    # deterministic catalogue every run.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: perterabyte
+          POSTGRES_PASSWORD: perterabyte
+          POSTGRES_DB: perterabyte
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U perterabyte -d perterabyte"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://perterabyte:perterabyte@localhost:5432/perterabyte
+
     steps:
       - uses: actions/checkout@v4
 
@@ -105,6 +127,12 @@ jobs:
 
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
+
+      - name: Apply migrations
+        run: pnpm db:deploy
+
+      - name: Seed the table
+        run: pnpm ingest
 
       # Build is its own step so a build failure is distinguishable from a
       # test failure. playwright.config.ts serves the built output in CI.

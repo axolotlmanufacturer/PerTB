@@ -2,10 +2,11 @@
   "name": "perterabyte",
   "version": "0.1.0",
   "private": true,
-  "description": "Storage price comparison ranked by cost per terabyte across Amazon and eBay.",
+  "description":
+    "Storage price comparison ranked by cost per terabyte across Amazon and eBay.",
   "packageManager": "pnpm@10.33.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=22",
   },
   "scripts": {
     "dev": "next dev",
@@ -22,13 +23,13 @@
     "test:e2e": "playwright test",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
-    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build"
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
   },
   "dependencies": {
     "@sentry/nextjs": "10.73.0",
     "next": "15.5.25",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.1",
@@ -42,10 +43,10 @@
     "eslint-config-prettier": "10.1.8",
     "prettier": "3.9.6",
     "typescript": "5.9.3",
-    "vitest": "4.1.11"
+    "vitest": "4.1.11",
   },
   "pnpm": {
     "ignoredBuiltDependencies": ["@sentry/cli", "unrs-resolver"],
-    "onlyBuiltDependencies": []
-  }
+    "onlyBuiltDependencies": [],
+  },
 }

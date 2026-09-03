@@ -27,6 +27,7 @@ function row(overrides: Partial<DriveRow> = {}): DriveRow {
     shuckable: false,
     shuckedEquivalent: null,
     marketplace: 'ebay',
+    externalId: `e${seq}`,
     condition: 'used',
     lotSize: 1,
     priceCents: 16_000,

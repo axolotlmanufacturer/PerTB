@@ -1,4 +1,5 @@
 import { AFFILIATE_REL } from '@/lib/affiliate';
+import { outboundUrl } from '@/lib/outbound';
 import { formatCapacity, formatDollars } from '@/lib/pricing';
 import type { Query } from '@/lib/query';
 import type { DriveRow, OfferGroup, TableView } from '@/lib/table';
@@ -39,15 +40,36 @@ function RiskCell({ row }: { row: DriveRow }) {
   );
 }
 
-function OfferLink({ row, children }: { row: DriveRow; children: React.ReactNode }) {
+/**
+ * Every outbound link is built here, tagged with the sub-id of the route the
+ * visitor is on. Rendering `row.url` directly would produce links that work
+ * perfectly and earn nothing.
+ */
+function OfferLink({
+  row,
+  subId,
+  children,
+}: {
+  row: DriveRow;
+  subId: string;
+  children: React.ReactNode;
+}) {
   return (
-    <a href={row.url} target="_blank" rel={AFFILIATE_REL}>
+    <a href={outboundUrl(row, subId)} target="_blank" rel={AFFILIATE_REL}>
       {children}
     </a>
   );
 }
 
-function GroupRow({ group, query }: { group: OfferGroup; query: Query }) {
+function GroupRow({
+  group,
+  query,
+  subId,
+}: {
+  group: OfferGroup;
+  query: Query;
+  subId: string;
+}) {
   const row = group.cheapest;
   const count = group.offers.length;
   const totalTb = (Number(row.capacityBytes) * row.lotSize) / 1e12;
@@ -60,7 +82,7 @@ function GroupRow({ group, query }: { group: OfferGroup; query: Query }) {
       </td>
 
       <td style={td}>
-        <OfferLink row={row}>
+        <OfferLink row={row} subId={subId}>
           {row.brand} {row.model}
         </OfferLink>
         {row.shuckable && (
@@ -118,7 +140,7 @@ function GroupRow({ group, query }: { group: OfferGroup; query: Query }) {
               {group.offers.map(({ row: offer, pptCents }) => (
                 <li key={offer.offerId} style={{ marginBottom: '0.2rem' }}>
                   <span className="tabular">{ppt(pptCents)}</span>{' '}
-                  <OfferLink row={offer}>
+                  <OfferLink row={offer} subId={subId}>
                     {MARKETPLACE[offer.marketplace]}
                     {offer.sellerName ? ` · ${offer.sellerName}` : ''}
                   </OfferLink>
@@ -127,14 +149,25 @@ function GroupRow({ group, query }: { group: OfferGroup; query: Query }) {
             </ul>
           </details>
         ) : (
-          <OfferLink row={row}>{MARKETPLACE[row.marketplace]}</OfferLink>
+          <OfferLink row={row} subId={subId}>
+            {MARKETPLACE[row.marketplace]}
+          </OfferLink>
         )}
       </td>
     </tr>
   );
 }
 
-export function DriveTable({ view, query }: { view: TableView; query: Query }) {
+export function DriveTable({
+  view,
+  query,
+  subId = 'home',
+}: {
+  view: TableView;
+  query: Query;
+  /** Landing-page slug, so revenue attributes to routes (ticket 4.6). */
+  subId?: string;
+}) {
   if (view.groups.length === 0) {
     return (
       <p style={{ color: 'var(--fg-muted)', margin: '1rem 0' }}>
@@ -175,7 +208,7 @@ export function DriveTable({ view, query }: { view: TableView; query: Query }) {
         </thead>
         <tbody>
           {view.groups.map((group) => (
-            <GroupRow key={group.key} group={group} query={query} />
+            <GroupRow key={group.key} group={group} query={query} subId={subId} />
           ))}
         </tbody>
       </table>

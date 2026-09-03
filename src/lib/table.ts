@@ -37,6 +37,8 @@ export interface DriveRow {
   shuckedEquivalent: string | null;
 
   marketplace: Marketplace;
+  /** ASIN or eBay item id — the Amazon link builder needs the ASIN. */
+  externalId: string;
   condition: Condition;
   lotSize: number;
   priceCents: number;

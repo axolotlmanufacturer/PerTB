@@ -29,6 +29,7 @@ export async function loadDriveRows(now: Date = new Date()): Promise<DriveRow[]>
       id: true,
       productId: true,
       marketplace: true,
+      externalId: true,
       condition: true,
       lotSize: true,
       priceCents: true,
@@ -73,6 +74,7 @@ export async function loadDriveRows(now: Date = new Date()): Promise<DriveRow[]>
     shuckedEquivalent: offer.product.shuckedEquivalent,
 
     marketplace: offer.marketplace,
+    externalId: offer.externalId,
     condition: offer.condition,
     lotSize: offer.lotSize,
     priceCents: offer.priceCents,

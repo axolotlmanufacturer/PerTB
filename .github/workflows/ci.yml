@@ -22,6 +22,29 @@ jobs:
     name: Typecheck, lint, unit
     runs-on: ubuntu-latest
     timeout-minutes: 15
+
+    # The Amazon resilience tests (ticket 2.7) run against a real database.
+    # CLAUDE.md §1.4 calls them load-bearing, and they FAIL rather than skip
+    # when DATABASE_URL is unset in CI — a load-bearing test that quietly
+    # skips is worse than no test.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: perterabyte
+          POSTGRES_PASSWORD: perterabyte
+          POSTGRES_DB: perterabyte
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U perterabyte -d perterabyte"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://perterabyte:perterabyte@localhost:5432/perterabyte
+
     steps:
       - uses: actions/checkout@v4
 
@@ -46,10 +69,9 @@ jobs:
 
       - name: Prisma schema valid
         run: pnpm exec prisma validate
-        env:
-          # Migrate reads the URL from prisma.config.ts; validate never
-          # connects, so any well-formed URL satisfies it.
-          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+      - name: Apply migrations
+        run: pnpm db:deploy
 
       # Coverage, not plain `test`: the Phase 1 gate on normalize.ts and
       # pricing.ts is a threshold in vitest.config.mts, and running without

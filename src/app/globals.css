@@ -1,0 +1,60 @@
+/*
+ * Density over whitespace. The audience is NAS builders and homelab operators
+ * reading a table of numbers; there is no hero section and no marketing voice
+ * anywhere on this site (brief §1).
+ */
+
+:root {
+  color-scheme: light dark;
+
+  --bg: #ffffff;
+  --bg-subtle: #f6f7f8;
+  --fg: #16191d;
+  --fg-muted: #5b6470;
+  --border: #d9dde2;
+  --accent: #0b5fff;
+
+  --mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1216;
+    --bg-subtle: #161a20;
+    --fg: #e7ebef;
+    --fg-muted: #98a2ae;
+    --border: #2a313a;
+    --accent: #5c9dff;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--accent);
+}
+
+code,
+.tabular {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}

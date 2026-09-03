@@ -72,10 +72,30 @@ describe('spec-dictionary integrity', () => {
         e.technologyConfidence < CONFIDENCE_THRESHOLD,
     );
     // These are the families whose recording technology or NAND type genuinely
-    // varies. They exist on purpose; coverage is not the metric.
-    expect(sub.length).toBeGreaterThanOrEqual(8);
+    // varies BUT is knowable — a specific model number or an explicit CMR/SMR
+    // token resolves them. They exist on purpose; coverage is not the metric.
+    expect(sub.length).toBeGreaterThanOrEqual(7);
     for (const e of sub) {
       expect(e.note, `${e.id} should say why it is held below threshold`).toBeTruthy();
+    }
+  });
+
+  it('declares an unknowable axis rather than asserting a value for it', () => {
+    // The other half of the same rule (CLAUDE.md §3.3). Where the fact does not
+    // exist to be read at all — what is inside a sealed enclosure — the entry
+    // must NOT also assert a value, or it is a guess wearing a disclaimer.
+    const unknowable = ENTRIES.filter((e) => e.unknowable !== undefined);
+    expect(unknowable.length).toBeGreaterThanOrEqual(4);
+
+    for (const e of unknowable) {
+      expect(e.note, `${e.id} should say why the axis is unreadable`).toBeTruthy();
+      for (const axis of e.unknowable ?? []) {
+        expect(['technology', 'formFactor', 'interface'], e.id).toContain(axis);
+        expect(
+          e[axis as 'technology' | 'formFactor' | 'interface'],
+          `${e.id} declares ${axis} unknowable and then asserts it`,
+        ).toBeUndefined();
+      }
     }
   });
 

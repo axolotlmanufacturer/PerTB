@@ -22,6 +22,23 @@ function ppt(cents: number): string {
   return formatDollars(cents / 100);
 }
 
+/**
+ * An axis we do not know.
+ *
+ * Rendered as a dash rather than an assumed value, and never as a blank cell —
+ * an empty cell reads as "not applicable", which is a different claim.
+ */
+function Unknown({ reason }: { reason?: string }) {
+  return (
+    <span
+      className="spark-cell__none"
+      title={reason ?? 'Not resolvable from the listing'}
+    >
+      —
+    </span>
+  );
+}
+
 /** Used rows must let the buyer see the risk they are taking (§3.7). */
 function RiskCell({ row }: { row: DriveRow }) {
   if (row.condition === 'new') return <td />;
@@ -191,14 +208,29 @@ function GroupRow({
 
       <td className="num">{formatCapacity(row.capacityBytes)}</td>
 
-      <td className="nowrap">{row.technology ? TECHNOLOGY[row.technology] : '—'}</td>
-
       <td className="nowrap">
-        {row.formFactor ? labelFor('formFactor', row.formFactor) : '—'}
+        {row.technology ? (
+          TECHNOLOGY[row.technology]
+        ) : (
+          // An honest blank, not a guess. For a sealed enclosure the drive
+          // inside is not disclosed and varies by production run, so this is
+          // the true value (CLAUDE.md §3.3, the unknowable-axis clause).
+          <Unknown
+            reason={
+              row.shuckable
+                ? 'Not disclosed: the drive inside a sealed enclosure varies by production run'
+                : undefined
+            }
+          />
+        )}
       </td>
 
       <td className="nowrap">
-        {row.interface ? labelFor('interface', row.interface) : '—'}
+        {row.formFactor ? labelFor('formFactor', row.formFactor) : <Unknown />}
+      </td>
+
+      <td className="nowrap">
+        {row.interface ? labelFor('interface', row.interface) : <Unknown />}
       </td>
 
       <td className="nowrap">{CONDITION[row.condition]}</td>

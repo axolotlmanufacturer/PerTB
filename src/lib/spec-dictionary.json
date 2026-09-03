@@ -224,9 +224,8 @@
       "shuckable": true,
       "shuckedEquivalent": "Seagate BarraCuda or Exos white-label 3.5-inch",
       "confidence": 0.9,
-      "technologyConfidence": 0.45,
-      "note": "Enclosure contents vary by capacity and production run; recording technology is not resolvable from the listing.",
-      "technology": "hdd_cmr"
+      "note": "Sealed enclosure: the manufacturer does not disclose the drive inside and it varies by production run, so the recording technology is not resolvable from any listing. Declared unknowable rather than guessed (CLAUDE.md §3.3) — the row publishes with technology null and can never match a technology filter.",
+      "unknowable": ["technology"]
     },
     {
       "id": "seagate-expansion-portable",
@@ -584,9 +583,8 @@
       "shuckable": true,
       "shuckedEquivalent": "WD white-label (Ultrastar DC HC-class) 3.5-inch CMR",
       "confidence": 0.9,
-      "technologyConfidence": 0.5,
-      "note": "The shucking staple. 8TB+ typically contains a CMR white-label, but the exact drive varies by production run, so technology stays below threshold.",
-      "technology": "hdd_cmr"
+      "note": "Sealed enclosure: the manufacturer does not disclose the drive inside and it varies by production run, so the recording technology is not resolvable from any listing. Declared unknowable rather than guessed (CLAUDE.md §3.3) — the row publishes with technology null and can never match a technology filter.",
+      "unknowable": ["technology"]
     },
     {
       "id": "wd-elements-portable",
@@ -611,9 +609,8 @@
       "shuckable": true,
       "shuckedEquivalent": "WD white-label (Ultrastar DC HC-class) 3.5-inch CMR",
       "confidence": 0.88,
-      "technologyConfidence": 0.5,
-      "technology": "hdd_cmr",
-      "note": "Rebadged Elements; the enclosed drive varies by capacity and production run, so the recording technology is not resolvable from the listing."
+      "note": "Sealed enclosure: the manufacturer does not disclose the drive inside and it varies by production run, so the recording technology is not resolvable from any listing. Declared unknowable rather than guessed (CLAUDE.md §3.3) — the row publishes with technology null and can never match a technology filter.",
+      "unknowable": ["technology"]
     },
     {
       "id": "wd-my-book",
@@ -626,9 +623,8 @@
       "shuckable": true,
       "shuckedEquivalent": "WD white-label 3.5-inch (hardware-encrypting bridge — shucked drive is unreadable without the enclosure on older units)",
       "confidence": 0.88,
-      "technologyConfidence": 0.5,
-      "technology": "hdd_cmr",
-      "note": "Enclosed drive varies by production run, and older units use a hardware-encrypting bridge, so the contents are not resolvable from the listing."
+      "note": "Sealed enclosure: the manufacturer does not disclose the drive inside and it varies by production run, so the recording technology is not resolvable from any listing. Declared unknowable rather than guessed (CLAUDE.md §3.3) — the row publishes with technology null and can never match a technology filter.",
+      "unknowable": ["technology"]
     },
     {
       "id": "wd-my-passport",

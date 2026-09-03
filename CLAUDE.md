@@ -223,6 +223,43 @@ absent; eBay's item aspects are worse. **Everything rests on parsing the title.*
 Dictionary lookup (`src/lib/spec-dictionary.json`) runs **before** regex and
 raises confidence when it hits.
 
+#### The unknowable-axis clause
+
+**Amended by a human during Phase 5.** The minimum rule above stands unchanged
+for every axis that has a value waiting to be read. This clause covers the case
+where there is nothing to read at all.
+
+A curated dictionary entry may list axes as `unknowable`. Such an axis:
+
+- asserts **no value** — an entry must not carry both, and a test enforces it;
+- suppresses the family-regex fallback, which would otherwise substitute one
+  guess for another (`classifyTechnology` returns `hdd_cmr` at 0.4 for any
+  unmatched HDD);
+- is **left out of the confidence minimum** rather than scoring zero, because
+  it is not a failed reading and is therefore not evidence about how well the
+  rest of the listing was read;
+- is **overridden by an explicit token in the title**. A seller who writes
+  "CMR" has opened the box; that is evidence about this unit.
+
+The line is whether the fact exists to be read:
+
+- **Knowable, not stated here** — a WD Blue whose title omitted the model
+  number. Quarantines, and a later listing carrying the model number resolves
+  it. Nothing about this changed.
+- **Disclosed by nobody** — the drive inside a sealed WD Elements, which varies
+  by production run. Publishes with `technology: null`, rendered "—".
+
+The safety property still holds structurally: `passes()` refuses to match a
+null axis against a filter on that axis, so such a row can never appear in a
+technology-filtered view. It appears in the unfiltered table and on
+`/hdd/shuckable`, which is what §3.8 requires and what the previous reading
+made impossible — all four shuckable families quarantined, so the shucking
+insight had no surface at all.
+
+**Do not widen this.** Adding an axis to `unknowable` is a claim that no
+listing anywhere will ever state it. Today the only members are the recording
+technologies of the four sealed external enclosures.
+
 ### 3.4 Data model
 
 ```

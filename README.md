@@ -238,14 +238,16 @@ change.
 content expires within hours. Indexing a few thousand of them would fill the
 index with soft-404s and dilute the curated routes Phase 4 exists to rank.
 
-**The shucking landing renders empty today, and this is a Phase 1 decision, not
-a Phase 5 bug.** See the next entry: all four shuckable external families assert
-their recording technology below the publish threshold, confidence is the
-minimum across axes, so every one of them quarantines and `/hdd/shuckable` has
-no rows. The 5.4 delta is fully implemented and unit-tested, including its
-markup (`test/unit/drive-table.test.tsx` renders the table directly, because the
-running app cannot currently produce a row that exercises it). **This needs a
-decision** — see "Open question" below.
+**Sealed enclosures publish with an honest blank.** All four shuckable
+external families used to assert a recording technology below the publish
+threshold, so every one of them quarantined and `/hdd/shuckable` had no rows at
+all — §3.8's "most-searched insight in the niche" had no surface. A curated
+entry can now declare an axis `unknowable`, which asserts nothing, suppresses
+the family-regex fallback, and is left out of the confidence minimum. The row
+publishes with `technology: null`, rendered "—", and `passes()` still refuses
+to match a null axis against a filter on it. See the amended §3.3 in
+`CLAUDE.md`; the clause is deliberately narrow and a WD Blue whose title
+omitted the model number still quarantines.
 
 **Sub-threshold dictionary entries.** Twelve drive families whose recording
 technology or NAND type genuinely varies across capacities and production runs
@@ -258,42 +260,32 @@ guess is the failure mode the confidence rule exists to prevent.
 
 ---
 
-## Open question: unknown axes versus quarantine
+## Resolved: unknown axes versus quarantine
 
-Raised in Phase 5, not decided. CLAUDE.md §1 says to argue a non-negotiable
-rather than work around it, so nothing here has been changed.
+Raised in Phase 5, decided by a human, and implemented — the amended §3.3 in
+`CLAUDE.md` is the authority.
 
-An unresolved axis currently contributes a confidence of **zero**, and
-confidence is the minimum across axes (§3.3), so a listing must resolve
-capacity, technology, form factor _and_ interface confidently or it does not
-appear at all. For most of the catalogue that is right and costs nothing: 19 of
-~420 generated listings quarantine.
+An unresolved axis contributes a confidence of **zero**, and confidence is the
+minimum across axes, so a listing must resolve capacity, technology, form factor
+_and_ interface confidently or it does not appear. That is unchanged, and it is
+right wherever the fact exists to be read.
 
-It is not right for external enclosures. The four shuckable families each carry
-a dictionary note saying, in effect, "the drive inside varies by production run,
-so the recording technology is not resolvable from the listing" — and then
-assert `hdd_cmr` anyway at 0.45–0.5, because asserting nothing scores worse than
-asserting a guess. Either way they quarantine, so `/hdd/shuckable` is empty, the
-shuckable badge never renders, and §3.8's "most-searched insight in the niche"
-has no surface.
+The one exception is where it does not. A curated entry may declare an axis
+`unknowable`: it then asserts no value, suppresses the family-regex fallback
+(which returns `hdd_cmr` at 0.4 for any unmatched HDD, so dropping the
+assertion without this would swap one guess for another), and is left out of the
+confidence minimum rather than scoring zero — it is not a failed reading, so it
+is not evidence about how well the rest of the listing was read. An explicit
+CMR/SMR token in the title still overrides it: whoever wrote that opened the
+box.
 
-The argument for changing it: the harm §3.3 names is a listing "surfacing in an
-interface-filtered view" it does not belong in, and `passes()` already prevents
-that structurally — a row with `technology: null` can never satisfy a filter on
-technology. A WD Elements 20TB has a certain capacity, a certain form factor, a
-certain interface and a certain price; the only unknown is the drive inside, and
-"Technology: —" states that unknown honestly. Publishing it with an honest blank
-is not the same act as publishing a guess.
-
-The argument against: it is a change to a §1 non-negotiable, and the current
-rule has the virtue of being impossible to erode one axis at a time.
-
-A narrower option sits between them: distinguish _permanently_ unknowable axes
-(what is inside a sealed enclosure) from _currently_ unresolved ones (a WD Blue
-whose title omitted the model number). The first publishes with a blank; the
-second keeps quarantining until a model number appears. That is a principled
-line rather than a threshold nudge, but it is still a change to §3.3 and wants a
-human decision.
+The line is whether the fact exists to be read at all. What is inside a sealed
+WD Elements is disclosed by nobody and varies by production run, so waiting
+resolves nothing; a WD Blue's recording technology is a knowable property of a
+specific model number that this listing happened to omit, so it waits. Today the
+only members of `unknowable` are the recording technologies of the four sealed
+external enclosures, and a dictionary test fails if an entry ever declares an
+axis unknowable and asserts it too.
 
 ---
 

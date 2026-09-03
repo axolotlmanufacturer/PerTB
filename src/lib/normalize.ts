@@ -340,6 +340,15 @@ export interface SpecEntry {
   technologyConfidence?: number;
   formFactorConfidence?: number;
   interfaceConfidence?: number;
+  /**
+   * Axes this family can NEVER resolve from a listing, however it is written.
+   *
+   * Not "we did not manage to read it" — "there is nothing to read". The only
+   * members today are the recording technologies of sealed external enclosures,
+   * where the manufacturer does not disclose the drive inside and it varies by
+   * production run. See the note on `unknowableAxes` in `normalise`.
+   */
+  unknowable?: string[];
   note?: string;
 }
 
@@ -421,6 +430,25 @@ export function normalise(title: string, description = ''): Normalised {
   const hit = lookupDictionary(title);
   const entry = hit?.entry;
 
+  /**
+   * Axes this family cannot resolve from ANY listing — CLAUDE.md §3.3, the
+   * "permanently unknowable" clause.
+   *
+   * The distinction the rule turns on is whether the fact exists to be read.
+   * A WD Blue whose title omitted the model number has a knowable recording
+   * technology that this particular listing did not state, so it quarantines
+   * until a listing does. What is inside a sealed WD Elements is not disclosed
+   * by anyone and varies by production run, so no listing will ever state it —
+   * there is no future in which quarantining resolves anything.
+   *
+   * For those axes we assert nothing, publish the value as null, and leave the
+   * axis out of the confidence minimum. `passes()` still refuses to match a
+   * null axis against a filter on it, so such a row can never surface in a
+   * technology-filtered view; it appears in the unfiltered table and on
+   * /hdd/shuckable with "Technology: —", which is the true statement.
+   */
+  const unknowableAxes = new Set(entry?.unknowable ?? []);
+
   // Technology precedence: an explicit CMR/SMR/NAND token beats the curated
   // table, which beats the family-name regexes. CLAUDE.md §3.3 requires the
   // recording technology to come from the curated table rather than the
@@ -436,10 +464,17 @@ export function normalise(title: string, description = ''): Normalised {
   const regexTech = classifyTechnology(haystack);
   const tech: Signal<Technology> =
     explicitTech.value !== null
-      ? explicitTech
-      : entry?.technology !== undefined
-        ? dictTech
-        : regexTech;
+      ? // A seller stating "CMR" outright is evidence about THIS unit, and it
+        // beats even an unknowable declaration — the enclosure is sealed, but
+        // the person who opened it is not guessing.
+        explicitTech
+      : unknowableAxes.has('technology')
+        ? // Suppress the family regex too. Its HDD fallback would return
+          // hdd_cmr at 0.4, which is the guess this clause exists to refuse.
+          none()
+        : entry?.technology !== undefined
+          ? dictTech
+          : regexTech;
 
   // Form factor and interface: the dictionary wins when it has an opinion.
   // When it omits the field it is deliberately deferring — Exos and Ultrastar
@@ -450,7 +485,11 @@ export function normalise(title: string, description = ''): Normalised {
     entry?.formFactorConfidence,
     entry?.confidence ?? 0,
   );
-  const ff = dictFf.value !== null ? dictFf : classifyFormFactor(haystack);
+  const ff = unknowableAxes.has('formFactor')
+    ? none<FormFactor>()
+    : dictFf.value !== null
+      ? dictFf
+      : classifyFormFactor(haystack);
 
   const dictIface = dictSignal<Interface>(
     entry?.interface,
@@ -458,14 +497,30 @@ export function normalise(title: string, description = ''): Normalised {
     entry?.interfaceConfidence,
     entry?.confidence ?? 0,
   );
-  const iface = dictIface.value !== null ? dictIface : classifyInterface(haystack);
+  const iface = unknowableAxes.has('interface')
+    ? none<Interface>()
+    : dictIface.value !== null
+      ? dictIface
+      : classifyInterface(haystack);
 
   // MINIMUM, not mean — see CLAUDE.md §3.3. A listing with perfect capacity
   // but an unknown interface must not surface in an interface-filtered view
   // just because two other axes were confident.
-  const confidence = rejectionReason
-    ? 0
-    : Math.min(capacityBytes ? 1 : 0, tech.conf, ff.conf, iface.conf);
+  //
+  // A declared-unknowable axis that came back null is left OUT of the minimum
+  // rather than contributing zero. It is not a failed reading, so it is not
+  // evidence about how well the rest of the listing was read.
+  const scored: number[] = [capacityBytes ? 1 : 0];
+  for (const [axis, signal] of [
+    ['technology', tech],
+    ['formFactor', ff],
+    ['interface', iface],
+  ] as const) {
+    if (signal.value === null && unknowableAxes.has(axis)) continue;
+    scored.push(signal.conf);
+  }
+
+  const confidence = rejectionReason ? 0 : Math.min(...scored);
 
   const warrantyYears = parseWarrantyYears(haystack) ?? entry?.warrantyYears ?? null;
   const parsedWarranty = parseHasWarranty(haystack);

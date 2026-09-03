@@ -243,9 +243,51 @@ describe('quarantine rather than guess', () => {
     ).toBe(true);
   });
 
-  it('holds shuckable externals, whose contents vary by production run', () => {
+  it('does NOT hold a sealed enclosure — it publishes with a blank instead', () => {
+    // The line is whether the fact exists to be read. A WD Blue's recording
+    // technology is knowable and this listing did not state it, so it waits.
+    // What is inside a sealed WD Elements is disclosed by nobody and varies by
+    // production run, so waiting resolves nothing and the honest output is a
+    // null on that axis with the rest of the row intact (CLAUDE.md §3.3).
     const n = normalise('WD Elements Desktop 18TB External Hard Drive USB 3.0');
     expect(n.shuckable).toBe(true);
+    expect(n.technology).toBeNull();
+    expect(n.formFactor).toBe('ext_desktop');
+    expect(n.interface).toBe('usb_g1');
+    expect(isPublishable(n)).toBe(true);
+  });
+
+  it('does not let the unknowable axis drag the confidence down', () => {
+    // The declared-unknowable axis is left OUT of the minimum. Scoring it zero
+    // would quarantine the row; scoring it 0.5 would be a guess.
+    const n = normalise('WD Elements Desktop 18TB External Hard Drive USB 3.0');
+    expect(n.confidence).toBeGreaterThanOrEqual(CONFIDENCE_THRESHOLD);
+  });
+
+  it('takes the seller word for it when the title states the technology', () => {
+    // The enclosure is sealed, but someone who opened it is not guessing.
+    const n = normalise('WD Elements Desktop 18TB External CMR Hard Drive USB 3.0');
+    expect(n.technology).toBe('hdd_cmr');
+    expect(isPublishable(n)).toBe(true);
+  });
+
+  it('never guesses the enclosure contents from the family regex', () => {
+    // classifyTechnology's HDD branch falls back to hdd_cmr at 0.4. Dropping
+    // the dictionary assertion without suppressing that fallback would have
+    // swapped one guess for another.
+    for (const title of [
+      'WD easystore 14TB External Desktop Hard Drive USB 3.0',
+      'WD My Book 22TB External Desktop Hard Drive USB 3.0',
+      'Seagate Expansion Desktop 16TB External Hard Drive USB 3.0',
+    ]) {
+      expect(normalise(title).technology, title).toBeNull();
+    }
+  });
+
+  it('still holds an unresolved axis that nobody declared unknowable', () => {
+    // The clause is narrow by construction: it only applies where a curated
+    // entry says so. An unreadable axis anywhere else still scores zero.
+    const n = normalise('Acme Superdrive 9000 4TB internal hard drive');
     expect(isPublishable(n)).toBe(false);
   });
 });

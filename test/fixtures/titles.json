@@ -1099,10 +1099,10 @@
       "expect": {
         "lotSize": 1,
         "capacityTb": 18,
-        "technology": "hdd_cmr",
+        "technology": null,
         "formFactor": "ext_desktop",
         "interface": "usb_g1",
-        "publishable": false
+        "publishable": true
       }
     },
     {
@@ -1110,10 +1110,10 @@
       "expect": {
         "lotSize": 1,
         "capacityTb": 14,
-        "technology": "hdd_cmr",
+        "technology": null,
         "formFactor": "ext_desktop",
         "interface": "usb_g1",
-        "publishable": false
+        "publishable": true
       }
     },
     {
@@ -1121,10 +1121,10 @@
       "expect": {
         "lotSize": 1,
         "capacityTb": 22,
-        "technology": "hdd_cmr",
+        "technology": null,
         "formFactor": "ext_desktop",
         "interface": "usb_g1",
-        "publishable": false
+        "publishable": true
       }
     },
     {
@@ -1143,10 +1143,10 @@
       "expect": {
         "lotSize": 1,
         "capacityTb": 16,
-        "technology": "hdd_cmr",
+        "technology": null,
         "formFactor": "ext_desktop",
         "interface": "usb_g1",
-        "publishable": false
+        "publishable": true
       }
     },
     {

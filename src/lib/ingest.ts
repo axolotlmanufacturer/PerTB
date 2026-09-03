@@ -20,11 +20,32 @@ export interface IngestResult {
   offersUpserted: number;
   productsUpserted: number;
   pricePointsWritten: number;
+  pricePointsTrimmed: number;
   quarantined: number;
   rejected: number;
   expiredDeleted: number;
   /** Marketplaces that were skipped, and why. Never a failure. */
   skipped: { marketplace: string; reason: string }[];
+}
+
+/**
+ * Retention for PricePoint (ticket 5.5).
+ *
+ * The display window is 90 days, so eighteen months is not there to be read —
+ * it is there so seasonal comparisons remain possible without the table growing
+ * without bound. Points also disappear earlier by cascade whenever their offer
+ * expires, so this pass only ever bites on listings that have stayed live for a
+ * year and a half: stable Amazon ASINs, mostly.
+ */
+export const PRICE_POINT_RETENTION_MONTHS = 18;
+
+export function pricePointCutoff(now: Date): Date {
+  const cutoff = new Date(now);
+  // UTC, not local. The sweep runs in GitHub Actions and on Vercel, and a
+  // developer in a DST timezone must not compute a cutoff an hour off the one
+  // production computes.
+  cutoff.setUTCMonth(cutoff.getUTCMonth() - PRICE_POINT_RETENTION_MONTHS);
+  return cutoff;
 }
 
 export interface IngestOptions {
@@ -79,6 +100,7 @@ export async function runIngest(options: IngestOptions): Promise<IngestResult> {
     offersUpserted: 0,
     productsUpserted: 0,
     pricePointsWritten: 0,
+    pricePointsTrimmed: 0,
     quarantined: 0,
     rejected: 0,
     expiredDeleted: 0,
@@ -270,8 +292,15 @@ export async function runIngest(options: IngestOptions): Promise<IngestResult> {
   const deleted = await prisma.offer.deleteMany({ where: { expiresAt: { lte: now } } });
   result.expiredDeleted = deleted.count;
 
+  // Retention (ticket 5.5). Runs after the expiry pass, so it only sees points
+  // whose offer survived — the cascade has already taken the rest.
+  const trimmed = await prisma.pricePoint.deleteMany({
+    where: { observedAt: { lt: pricePointCutoff(now) } },
+  });
+  result.pricePointsTrimmed = trimmed.count;
+
   logger.info(
-    `[ingest] done: ${result.offersUpserted} offers, ${result.productsUpserted} products, ${result.pricePointsWritten} price points, ${result.quarantined} quarantined, ${result.rejected} rejected, ${result.expiredDeleted} expired deleted`,
+    `[ingest] done: ${result.offersUpserted} offers, ${result.productsUpserted} products, ${result.pricePointsWritten} price points, ${result.quarantined} quarantined, ${result.rejected} rejected, ${result.expiredDeleted} expired deleted, ${result.pricePointsTrimmed} price points trimmed`,
   );
 
   return result;

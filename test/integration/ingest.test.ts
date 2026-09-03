@@ -1,7 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { runIngest } from '@/lib/ingest';
+import { PRICE_POINT_RETENTION_MONTHS, runIngest } from '@/lib/ingest';
 import { createMockAdapter, resetMockCatalogue } from '@/lib/sources/mock';
 import { AmazonNotEligibleError, type SourceAdapter } from '@/lib/sources/types';
 
@@ -217,7 +217,59 @@ describeDb('price history', () => {
     expect(second.pricePointsWritten).toBe(0);
     expect(await prisma.pricePoint.count()).toBe(first.pricePointsWritten);
   });
+
+  it('trims observations past the retention horizon and keeps the rest', async () => {
+    const now = new Date();
+    await runIngest({
+      prisma,
+      adapters: [createMockAdapter('ebay')],
+      logger: silent,
+      now,
+    });
+
+    const offer = await prisma.offer.findFirst({ select: { id: true } });
+    expect(offer).not.toBeNull();
+
+    // Two observations either side of the eighteen-month line.
+    await prisma.pricePoint.createMany({
+      data: [
+        {
+          offerId: offer!.id,
+          priceCents: 111_11,
+          observedAt: monthsAgo(now, PRICE_POINT_RETENTION_MONTHS + 1),
+        },
+        {
+          offerId: offer!.id,
+          priceCents: 222_22,
+          observedAt: monthsAgo(now, PRICE_POINT_RETENTION_MONTHS - 1),
+        },
+      ],
+    });
+
+    const swept = await runIngest({
+      prisma,
+      adapters: [createMockAdapter('ebay')],
+      logger: silent,
+      now,
+    });
+
+    expect(swept.pricePointsTrimmed).toBe(1);
+
+    const remaining = await prisma.pricePoint.findMany({
+      where: { offerId: offer!.id },
+      select: { priceCents: true },
+    });
+    const prices = remaining.map((p) => p.priceCents);
+    expect(prices).toContain(222_22);
+    expect(prices).not.toContain(111_11);
+  });
 });
+
+function monthsAgo(from: Date, months: number): Date {
+  const date = new Date(from);
+  date.setMonth(date.getMonth() - months);
+  return date;
+}
 
 describeDb('quarantine', () => {
   beforeEach(async () => {

@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { productIdentity, requestRevalidation } from '@/lib/ingest';
+import {
+  PRICE_POINT_RETENTION_MONTHS,
+  pricePointCutoff,
+  productIdentity,
+  requestRevalidation,
+} from '@/lib/ingest';
 import { isAuthorised, OFFERS_TAG } from '@/lib/cache';
 import { normalise } from '@/lib/normalize';
 
@@ -108,5 +113,28 @@ describe('cron route authorisation', () => {
 
   it('names the tag the table is cached under', () => {
     expect(OFFERS_TAG).toBe('offers');
+  });
+});
+
+describe('PricePoint retention (ticket 5.5)', () => {
+  it('cuts at eighteen months, calendar months not 30-day blocks', () => {
+    const now = new Date(Date.UTC(2026, 6, 15, 9, 30, 0));
+    expect(pricePointCutoff(now).toISOString()).toBe('2025-01-15T09:30:00.000Z');
+  });
+
+  it('is eighteen months, which is far longer than the display window', () => {
+    // The window on screen is 90 days. Retention is longer on purpose: it is
+    // there so a year-on-year comparison stays possible, not to be read.
+    expect(PRICE_POINT_RETENTION_MONTHS).toBe(18);
+  });
+
+  it('survives a month-end date that has no counterpart 18 months back', () => {
+    // 31 August minus 18 months is "31 February 2025", which JavaScript rolls
+    // forward into March. That keeps three extra days of history, which is
+    // harmless — the failure that would not be is a cutoff landing in the
+    // FUTURE and deleting live observations, so that is what this pins.
+    const cutoff = pricePointCutoff(new Date(Date.UTC(2026, 7, 31, 0, 0, 0)));
+    expect(cutoff.toISOString()).toBe('2025-03-03T00:00:00.000Z');
+    expect(cutoff.getTime()).toBeLessThan(Date.UTC(2026, 7, 31));
   });
 });

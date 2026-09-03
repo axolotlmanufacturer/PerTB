@@ -160,11 +160,96 @@ Phased, with a review checkpoint at the end of each phase.
 | 3     | The table — facets, duplicate collapse, dispersion     | **complete** |
 | 4     | SEO surface — ~40 curated landing routes               | **complete** |
 | 5     | Price history and shucking                             | **complete** |
-| 6     | Deal alerts                                            | next         |
-| 7     | Editorial, admin and compliance                        | planned      |
+| 6     | Deal alerts                                            | _deferred_   |
+| 7     | Editorial, admin and compliance                        | **complete** |
 
-The launch checklist — credential acquisition order, DNS, Search Console and the
-first-ingest runbook — lands with Phase 7 (ticket 7.6).
+Phase 6 is deferred rather than skipped: deal alerts cannot be built before
+somebody chooses a transactional email provider, and that decision touches
+deliverability and cost (ticket 6.6). Nothing else depends on it.
+
+---
+
+## Launch checklist
+
+Ticket 7.6. Work it in order — several steps have real dependencies and one of
+them takes weeks.
+
+### 1. Credentials — eBay first, Amazon when eligible
+
+**eBay is the primary source and is available immediately.** Amazon is not, and
+waiting for it delays everything.
+
+1. Register at [eBay Developers](https://developer.ebay.com), create a
+   production keyset, and take the client id and secret →
+   `EBAY_CLIENT_ID`, `EBAY_CLIENT_SECRET`.
+2. Join the [eBay Partner Network](https://partnernetwork.ebay.com). Approval
+   takes a few days. Take the **campaign id** (10 digits) and the **rotation id**
+   → `EPN_CAMPAIGN_ID`, `EPN_ROTATION_ID`.
+   Without these the traffic earns nothing while looking like it works, which is
+   the failure mode to check for rather than assume.
+3. Sign up as an [Amazon Associate](https://affiliate-program.amazon.com) and
+   take the store tag → `AMAZON_PARTNER_TAG`. Leave `AMAZON_ENABLED=false`.
+4. **Amazon Creators API access requires ≥10 qualifying sales in the trailing 30
+   days**, so it cannot be obtained before launch. Come back once eBay traffic
+   converts: Associates Central → Tools → Creators API → Create Application, then
+   set `AMAZON_CLIENT_ID`, `AMAZON_CLIENT_SECRET` and flip `AMAZON_ENABLED=true`.
+   Access is revoked again after any 30-day stretch without qualifying sales;
+   that is a logged warning, not an incident.
+
+### 2. Infrastructure
+
+1. Create a [Neon](https://neon.tech) project. Use the **pooled** connection
+   string → `DATABASE_URL`.
+2. `pnpm db:deploy` against it.
+3. Import the repo into Vercel. Set every variable from `.env.example` in the
+   Vercel project, `MOCK_DATA=false` included.
+4. `openssl rand -hex 32` → `REVALIDATE_SECRET` and `CRON_SECRET`, in both Vercel
+   and the GitHub repository secrets.
+5. `openssl rand -base64 24` → `ADMIN_PASSWORD`. Unset means /admin is closed,
+   which is safe but leaves you unable to work the quarantine queue.
+6. Add `DATABASE_URL` and the marketplace credentials to GitHub repository
+   secrets — the 3-hourly ingest runs in Actions, not on Vercel.
+
+### 3. DNS and the first sweep
+
+1. Point the apex and `www` at Vercel; let it issue the certificate. Confirm
+   HTTPS before anything else, because Basic auth on /admin is only as good as
+   the transport.
+2. `NEXT_PUBLIC_SITE_URL` = the live origin, no trailing slash. Canonicals, the
+   sitemap and `metadataBase` all derive from it, and a wrong value here quietly
+   poisons every canonical tag.
+3. Run the ingest workflow manually and read the summary. Expect a few hundred
+   offers from eBay and `amazon: disabled, skipping`.
+4. Check the table renders, then check `/admin/quarantine`: a large queue on the
+   first sweep means the dictionary needs entries, not that the threshold is
+   wrong.
+5. **Verify a real outbound link carries `mkevt`, `mkcid`, `mkrid`, `campid` and
+   `toolid`.** This is the single check most worth doing by hand. A link missing
+   them works perfectly and earns nothing.
+
+### 4. Search Console and analytics
+
+1. Add the property in [Search Console](https://search.google.com/search-console),
+   verify by DNS TXT.
+2. Submit `https://<domain>/sitemap.xml` — 47 URLs: the front page, 39 landings,
+   `/cheapest-per-tb`, the guides index, three guides and three legal pages.
+3. Confirm `/robots.txt` disallows `/api/`, `/admin/`, `/drive/` and `/*?`.
+4. Optional: add the domain to Plausible → `NEXT_PUBLIC_PLAUSIBLE_DOMAIN`. The
+   consent banner appears only once this is set.
+5. Optional: Sentry → `SENTRY_DSN`, and `NEXT_PUBLIC_SENTRY_DSN` for the browser.
+
+### 5. Before taking real traffic
+
+- [ ] **Have the legal pages reviewed.** They are drafts and say so in a banner
+      on the page. That banner comes off when a lawyer has read them, not when
+      they look finished.
+- [ ] Confirm the Amazon Associates wording appears in the footer of every page.
+      An e2e test asserts it; check it in a browser once anyway.
+- [ ] Spot-check ten rows against the live marketplace listing. Capacity, lot
+      size and shipping are where a wrong number would come from.
+- [ ] Watch one full ingest cycle and confirm expired offers are deleted rather
+      than lingering.
+- [ ] Confirm the table is complete with JavaScript disabled.
 
 ---
 
@@ -182,6 +267,40 @@ first-ingest runbook — lands with Phase 7 (ticket 7.6).
   leave it byte-identical.
 
 ### Deviations from the brief
+
+**MDX guides carry their metadata in TypeScript, not frontmatter.** `guides.ts`
+and `legal.ts` hold title, description, summary and date so they are typed,
+testable and available to the index page, the footer and the sitemap without
+parsing every file. The .mdx files are body text only.
+
+**The quarantine review needed three columns the schema did not have.** Ticket
+7.2 asks for parsed-versus-raw, and the raw title was not stored anywhere —
+`RawListing.title` was consumed by the normaliser and discarded, so a review UI
+could only ever have shown its own output. `Offer.rawTitle` fixes that.
+`Product.reviewedAt` and `Product.rejected` make a review stick: without them
+the next sweep would undo every correction three hours later, and a rejected
+product would be re-created and re-queued forever. All three are additive and
+nullable, so the migration breaks nothing.
+
+**Corrections are proposed, not written.** The review UI renders the
+`spec-dictionary.json` entry for the operator to commit rather than writing the
+file. Vercel's filesystem is read-only, and a tool that silently works locally
+and no-ops in production is worse than one that always asks for the same two
+steps. The dictionary is version-controlled on purpose: a change to what the
+site publishes should arrive as a diff someone can review.
+
+**The consent banner appears only when there is something to consent to.** With
+no `NEXT_PUBLIC_PLAUSIBLE_DOMAIN` set, nothing loads and nothing is stored, so a
+banner asking permission for that would be theatre. The affiliate relationship
+is disclosed in the footer of every page and on its own page — informing people
+is a different obligation from asking consent. The decision is remembered in
+localStorage rather than on a server, because storing a record of who declined
+tracking in order to honour their refusal to be tracked is a joke that writes
+itself.
+
+**/admin uses HTTP Basic.** One operator, no session to get wrong, no login page
+to build, and it works with JavaScript off like everything else. `ADMIN_PASSWORD`
+unset means the route is CLOSED, not open.
 
 **`NEXT_PUBLIC_SENTRY_DSN`**, added to Appendix B, optional and unset by
 default. Browser-side error reporting needs the DSN inlined into the client
@@ -291,5 +410,10 @@ axis unknowable and asserts it too.
 
 ## Legal
 
-Affiliate disclosures, privacy policy and terms land in Phase 7 and will be
-flagged for legal review. Nothing in this repository is legal advice.
+`/legal/privacy`, `/legal/terms` and `/legal/affiliate-disclosure` are written
+and live. **They are drafts.** Each carries a banner on the page saying it has
+not been reviewed by a lawyer, and `LEGAL_PAGES[].needsReview` drives that
+banner — a test asserts it is still set on every page. Take it down when a
+lawyer has actually read them, not when they look finished.
+
+Nothing in this repository is legal advice.

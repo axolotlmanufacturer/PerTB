@@ -7,7 +7,9 @@
         "http://127.0.0.1:3000/",
         "http://127.0.0.1:3000/hdd/nas",
         "http://127.0.0.1:3000/ssd/nvme-gen5",
-        "http://127.0.0.1:3000/cheapest-per-tb"
+        "http://127.0.0.1:3000/cheapest-per-tb",
+        "http://127.0.0.1:3000/guides/cmr-vs-smr-and-raid",
+        "http://127.0.0.1:3000/legal/privacy"
       ],
       "numberOfRuns": 3,
       "settings": {

@@ -76,13 +76,18 @@ any API key exists.
 ### Local database
 
 ```bash
-pnpm db:up      # Postgres 17 on :5432, matching DATABASE_URL in .env.example
+pnpm db:up        # Postgres 17 on :5432, matching DATABASE_URL in .env.example
+pnpm db:migrate   # apply migrations (creates one if the schema changed)
 pnpm db:down
 ```
 
 Production uses [Neon](https://neon.tech). Use the **pooled** connection string
 with the Neon serverless driver adapter — Prisma exhausts direct connections on
 serverless.
+
+Prisma 7 reads the datasource URL from `prisma.config.ts`, not from
+`schema.prisma`. At runtime the client takes an adapter rather than a URL; that
+wiring lands with `src/lib/db.ts` in Phase 2.
 
 ### Everything else
 
@@ -95,6 +100,7 @@ serverless.
 | `pnpm lint`                         | ESLint                                           |
 | `pnpm format` / `pnpm format:check` | Prettier                                         |
 | `pnpm test`                         | Unit tests (Vitest)                              |
+| `pnpm test:coverage`                | Unit tests + the coverage gate CI enforces       |
 | `pnpm test:e2e`                     | End-to-end tests (Playwright)                    |
 | `pnpm verify`                       | Typecheck + lint + unit + build, as CI runs them |
 
@@ -126,8 +132,8 @@ Phased, with a review checkpoint at the end of each phase.
 | Phase | Scope                                                  | State        |
 | ----- | ------------------------------------------------------ | ------------ |
 | 0     | Repository and guardrails                              | **complete** |
-| 1     | Domain core — taxonomy, normalisation, pricing, schema | next         |
-| 2     | Ingest — adapters, affiliate links, sweep              | planned      |
+| 1     | Domain core — taxonomy, normalisation, pricing, schema | **complete** |
+| 2     | Ingest — adapters, affiliate links, sweep              | next         |
 | 3     | The table — facets, duplicate collapse, dispersion     | planned      |
 | 4     | SEO surface — ~40 curated landing routes               | planned      |
 | 5     | Price history and shucking                             | planned      |
@@ -154,11 +160,34 @@ first-ingest runbook — lands with Phase 7 (ticket 7.6).
 
 ### Deviations from the brief
 
-One addition to Appendix B: **`NEXT_PUBLIC_SENTRY_DSN`**, optional and unset by
+**`NEXT_PUBLIC_SENTRY_DSN`**, added to Appendix B, optional and unset by
 default. Browser-side error reporting needs the DSN inlined into the client
 bundle at build time, which requires the `NEXT_PUBLIC_` prefix; the brief's
 `SENTRY_DSN` covers the server and edge runtimes only. Leave it unset to report
 from the server alone.
+
+**Golden corpus provenance.** The brief asks for the corpus to be expanded from
+real Amazon and eBay listing titles. The titles in `test/fixtures/titles.json`
+are **constructed**, not harvested: collecting real ones would mean pulling
+retailer HTML, which the no-scraping rule forbids outright, and the official
+APIs need credentials this repository does not have. They are modelled closely
+on real listing conventions and real product names, and cover every trap
+category the brief enumerates.
+
+**Five axes, not four.** The brief says "four independent axes" in prose but
+specifies five enumerations, and ticket 3.1 asks the query layer for five
+independent facet count maps. `AXES` carries all five so every enumeration gets
+the skip-your-own-axis treatment. How many appear as checkbox groups in the rail
+is a Phase 3 presentation decision.
+
+**Sub-threshold dictionary entries.** Twelve drive families whose recording
+technology or NAND type genuinely varies across capacities and production runs
+(WD Blue 3.5", WD Red non-Plus, Toshiba P300, Crucial BX500, the Kingston NV
+line, the shuckable externals) assert their likely value at a confidence _below_
+the publish threshold. They quarantine unless the title states CMR/SMR outright
+or a specific model number resolves them. The brief's curated table lists WD
+Blue as SMR; that is true of some models and false of others, and publishing a
+guess is the failure mode the confidence rule exists to prevent.
 
 ---
 

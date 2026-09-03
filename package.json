@@ -22,13 +22,19 @@
     "test:e2e": "playwright test",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:generate": "prisma generate",
+    "db:studio": "prisma studio",
     "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build"
   },
   "dependencies": {
+    "@prisma/client": "7.10.0",
     "@sentry/nextjs": "10.73.0",
     "next": "15.5.25",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "zod": "4.5.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.1",
@@ -41,11 +47,18 @@
     "eslint-config-next": "15.5.25",
     "eslint-config-prettier": "10.1.8",
     "prettier": "3.9.6",
+    "prisma": "7.10.0",
     "typescript": "5.9.3",
     "vitest": "4.1.11"
   },
   "pnpm": {
-    "onlyBuiltDependencies": [],
-    "ignoredBuiltDependencies": ["@sentry/cli", "unrs-resolver"]
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "prisma"
+    ],
+    "ignoredBuiltDependencies": [
+      "@sentry/cli",
+      "unrs-resolver"
+    ]
   }
 }

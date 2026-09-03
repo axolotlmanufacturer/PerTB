@@ -19,9 +19,23 @@ export default defineConfig({
       reporter: ['text', 'lcov'],
       include: ['src/lib/**/*.ts'],
       exclude: ['src/lib/**/*.test.ts'],
-      // Phase 1 gate: normalize.ts and pricing.ts above 90%. Thresholds are
-      // added when those files exist; enforcing them against an empty
-      // `src/lib` would fail the build for the wrong reason.
+      // Phase 1 gate. The correctness layer and the one $/TB definition are
+      // where a wrong number would come from, so they are held to a floor
+      // that CI enforces rather than a number someone checks by eye.
+      thresholds: {
+        'src/lib/normalize.ts': {
+          statements: 90,
+          branches: 90,
+          functions: 90,
+          lines: 90,
+        },
+        'src/lib/pricing.ts': {
+          statements: 90,
+          branches: 90,
+          functions: 90,
+          lines: 90,
+        },
+      },
     },
   },
 });

@@ -44,8 +44,18 @@ jobs:
       - name: Format check
         run: pnpm format:check
 
-      - name: Unit tests
-        run: pnpm test
+      - name: Prisma schema valid
+        run: pnpm exec prisma validate
+        env:
+          # Migrate reads the URL from prisma.config.ts; validate never
+          # connects, so any well-formed URL satisfies it.
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+      # Coverage, not plain `test`: the Phase 1 gate on normalize.ts and
+      # pricing.ts is a threshold in vitest.config.mts, and running without
+      # --coverage would skip it silently.
+      - name: Unit tests and coverage gate
+        run: pnpm test:coverage
 
   e2e:
     name: Build and e2e

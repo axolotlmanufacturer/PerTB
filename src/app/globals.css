@@ -855,3 +855,264 @@ code,
   white-space: nowrap;
   border: 0;
 }
+
+/* ── Prose: guides and the legal set (tickets 7.1, 7.3) ───────────────── */
+
+/*
+ * The one place on this site with generous measure and leading. The density
+ * rule is about the table — an article read start to finish has the opposite
+ * requirement, and 66 characters is where long-form stops being tiring.
+ */
+.standfirst {
+  font-size: var(--text-lg);
+  line-height: 1.45;
+  color: var(--fg-muted);
+  max-width: 62ch;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.005em;
+}
+
+.page-meta {
+  font-size: var(--text-sm);
+  color: var(--fg-faint);
+  margin: 0 0 1.75rem;
+}
+
+.prose {
+  max-width: 66ch;
+  font-size: 15px;
+  line-height: 1.65;
+  padding-bottom: 1rem;
+}
+
+.prose h2 {
+  font-size: var(--text-lg);
+  font-weight: 640;
+  letter-spacing: -0.011em;
+  margin: 2rem 0 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.prose h3 {
+  font-size: 15px;
+  font-weight: 640;
+  margin: 1.5rem 0 0.35rem;
+}
+
+.prose p {
+  margin: 0 0 0.9rem;
+}
+
+.prose ul,
+.prose ol {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+}
+
+.prose li {
+  margin-bottom: 0.35rem;
+}
+
+.prose strong {
+  font-weight: 640;
+}
+
+.prose code {
+  font-size: 0.9em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.05em 0.3em;
+}
+
+.prose pre {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 0.9rem;
+  overflow-x: auto;
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+
+.prose pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* A table inside prose is still a table: hairlines, tabular figures, scrolls
+   rather than squashing. */
+.prose table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--text-base);
+  margin: 0 0 1.25rem;
+  display: block;
+  overflow-x: auto;
+}
+
+.prose th,
+.prose td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.35rem 0.75rem 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.prose th {
+  font-weight: 640;
+  border-bottom-color: var(--border-strong);
+}
+
+.prose blockquote {
+  margin: 0 0 1rem;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--border-strong);
+  color: var(--fg-muted);
+}
+
+.prose .related {
+  max-width: none;
+}
+
+/* An unmissable draft banner. It is not decoration: a visitor reads a privacy
+   policy as a commitment, and this one has not been reviewed yet. */
+.notice {
+  border: 1px solid var(--warn);
+  border-left-width: 3px;
+  background: var(--warn-soft);
+  color: var(--fg);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.9rem;
+  margin: 0 0 1.75rem;
+  font-size: var(--text-base);
+  line-height: 1.55;
+}
+
+.guide-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.guide-list > li {
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.guide-list h2 {
+  margin: 0 0 0.25rem;
+  padding: 0;
+  border: 0;
+  font-size: var(--text-lg);
+}
+
+.guide-list h2 a {
+  text-decoration: none;
+}
+
+.guide-list h2 a:hover {
+  text-decoration: underline;
+}
+
+.guide-list p {
+  margin: 0;
+  color: var(--fg-muted);
+}
+
+/* ── Consent banner (ticket 7.4) ──────────────────────────────────────── */
+
+/*
+ * Fixed, so it costs no layout shift when it appears after hydration — the
+ * Lighthouse CLS budget is 0.05 and a banner that pushes the table down would
+ * spend most of it on its own.
+ */
+.consent {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  padding: 0.7rem 1.25rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border-strong);
+  box-shadow: 0 -1px 12px rgb(0 0 0 / 8%);
+  font-size: var(--text-base);
+}
+
+.consent__text {
+  margin: 0;
+  max-width: 78ch;
+  color: var(--fg-muted);
+}
+
+.consent__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.consent .btn {
+  margin-top: 0;
+}
+
+.btn--primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 500;
+}
+
+.btn--primary:hover {
+  border-color: var(--accent);
+  filter: brightness(1.08);
+}
+
+/* ── Quarantine review (ticket 7.2) ───────────────────────────────────── */
+
+/* The raw title is the evidence. It leads, in the font the listing lives in. */
+.quarantine__raw {
+  font-family: var(--mono);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.7rem;
+  margin: 0 0 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.quarantine__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem 0.75rem;
+  margin: 0.75rem 0 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.quarantine__actions form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.quarantine__actions .btn {
+  margin-top: 0;
+}
+
+.quarantine__correct .field {
+  width: auto;
+  min-width: 9rem;
+}

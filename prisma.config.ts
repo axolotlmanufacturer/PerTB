@@ -1,4 +1,15 @@
-import { defineConfig, env } from 'prisma/config';
+import { defineConfig } from 'prisma/config';
+
+/**
+ * `prisma generate` needs no connection string, but declaring the datasource
+ * unconditionally made it resolve DATABASE_URL eagerly — which meant
+ * `pnpm install` (via the postinstall generate) failed on a fresh clone and on
+ * any build where the connection string is a runtime-only secret.
+ *
+ * Declared only when it is actually set. Migrate and introspect still report a
+ * missing datasource clearly, because they need one and generate does not.
+ */
+const databaseUrl = process.env.DATABASE_URL;
 
 /**
  * Prisma 7 moved the datasource URL out of schema.prisma and into this file.
@@ -15,7 +26,5 @@ export default defineConfig({
   migrations: {
     path: 'prisma/migrations',
   },
-  datasource: {
-    url: env('DATABASE_URL'),
-  },
+  ...(databaseUrl ? { datasource: { url: databaseUrl } } : {}),
 });

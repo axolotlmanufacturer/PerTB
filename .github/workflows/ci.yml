@@ -132,7 +132,10 @@ jobs:
         run: pnpm db:deploy
 
       - name: Seed the table
-        run: pnpm ingest
+        # `seed` rather than `ingest`: it is explicitly the mock path, and it
+        # back-dates PricePoints so the 90-day history column has something to
+        # draw. An unexercised path is an untested path.
+        run: pnpm seed
 
       # Build is its own step so a build failure is distinguishable from a
       # test failure. playwright.config.ts serves the built output in CI.
@@ -192,7 +195,10 @@ jobs:
         run: pnpm db:deploy
 
       - name: Seed the table
-        run: pnpm ingest
+        # `seed` rather than `ingest`: it is explicitly the mock path, and it
+        # back-dates PricePoints so the 90-day history column has something to
+        # draw. An unexercised path is an untested path.
+        run: pnpm seed
 
       - name: Build
         run: pnpm build

@@ -1,3 +1,4 @@
+import { buildGroupHistory, type GroupHistory, type HistoryIndex } from './history';
 import { pricePerTbCents } from './pricing';
 import type { Query } from './query';
 import {
@@ -129,6 +130,29 @@ export interface OfferGroup {
   cheapestPptCents: number;
   /** Every offer in the group, cheapest first. Length 1 is the common case. */
   offers: { row: DriveRow; pptCents: number }[];
+  /** The 90-day series, when there is one. Null when history was not loaded. */
+  history: GroupHistory | null;
+  /** Populated only for shuckable externals — see `shuckComparison`. */
+  shuck: ShuckComparison | null;
+}
+
+/**
+ * A shuckable external measured against a bare drive (ticket 5.4).
+ *
+ * The comparator is the cheapest live BARE 3.5-inch drive of the same capacity
+ * and condition — not "the drive inside this enclosure". The curated dictionary
+ * is explicit that the part inside varies by production run, so naming it would
+ * be exactly the guess §1.1 forbids. What can be stated without guessing is
+ * what the buyer actually chooses between: this enclosure, or a bare drive of
+ * the same size, today.
+ */
+export interface ShuckComparison {
+  /** The cheapest bare equivalent's $/TB under the current shipping toggle. */
+  barePptCents: number;
+  /** e.g. "Seagate Exos X20". */
+  bareLabel: string;
+  /** Positive when shucking is the cheaper route, negative when it is not. */
+  savingPptCents: number;
 }
 
 export interface DispersionTick {
@@ -158,7 +182,19 @@ const SORTERS: Record<Query['sort'], (a: OfferGroup, b: OfferGroup) => number> =
     Number(a.cheapest.capacityBytes * BigInt(a.cheapest.lotSize)),
 };
 
-export function buildTable(rows: DriveRow[], query: Query): TableView {
+export interface BuildOptions {
+  /** 90-day observations by offer id. Omit and groups carry no history. */
+  history?: HistoryIndex;
+  /** Injected so a render is deterministic and a test can pin the window. */
+  now?: number;
+}
+
+export function buildTable(
+  rows: DriveRow[],
+  query: Query,
+  options: BuildOptions = {},
+): TableView {
+  const { history, now = Date.now() } = options;
   const matched = rows.filter((row) => passes(row, query, null));
 
   // Each axis is counted against every OTHER filter, but not its own.
@@ -186,6 +222,11 @@ export function buildTable(rows: DriveRow[], query: Query): TableView {
     else byKey.set(key, [entry]);
   }
 
+  // Built from the UNFILTERED live set on purpose: /hdd/shuckable filters bare
+  // drives out of the table, and a comparison drawn from what survived that
+  // filter would silently become "cheapest other enclosure".
+  const bare = bareIndex(rows, query);
+
   const groups: OfferGroup[] = [];
   for (const [key, offers] of byKey) {
     offers.sort((a, b) => a.pptCents - b.pptCents);
@@ -196,6 +237,15 @@ export function buildTable(rows: DriveRow[], query: Query): TableView {
       cheapest: best.row,
       cheapestPptCents: best.pptCents,
       offers,
+      history: history
+        ? buildGroupHistory(
+            offers.map((o) => o.row),
+            history,
+            query.includeShipping,
+            now,
+          )
+        : null,
+      shuck: shuckComparison(best.row, best.pptCents, bare),
     });
   }
 
@@ -213,6 +263,68 @@ export function buildTable(rows: DriveRow[], query: Query): TableView {
     facetCounts,
     floorPptCents,
     dispersion,
+  };
+}
+
+/** The bare drives a shuckable external can honestly be measured against. */
+interface BareCandidate {
+  pptCents: number;
+  label: string;
+}
+
+function bareKey(capacityBytes: bigint, condition: Condition): string {
+  return `${capacityBytes}|${condition}`;
+}
+
+/**
+ * Cheapest bare 3.5-inch drive per (capacity, condition).
+ *
+ * Deliberately narrow. A lot of five is excluded because it is not the purchase
+ * the shucker is weighing up, and an out-of-stock listing is excluded because a
+ * saving against something nobody can buy is not a saving.
+ */
+function bareIndex(rows: DriveRow[], query: Query): Map<string, BareCandidate> {
+  const index = new Map<string, BareCandidate>();
+
+  for (const row of rows) {
+    if (row.shuckable) continue;
+    if (row.lotSize !== 1) continue;
+    if (!row.inStock) continue;
+    if (row.formFactor !== '3.5') continue;
+    if (row.technology !== 'hdd_cmr' && row.technology !== 'hdd_smr') continue;
+
+    const key = bareKey(row.capacityBytes, row.condition);
+    const pptCents = rowPricePerTbCents(row, query);
+    const existing = index.get(key);
+    if (!existing || pptCents < existing.pptCents) {
+      index.set(key, { pptCents, label: `${row.brand} ${row.model}` });
+    }
+  }
+
+  return index;
+}
+
+/**
+ * The shucking delta — CLAUDE.md §3.8, ticket 5.4.
+ *
+ * Returns null rather than a fallback whenever there is no like-for-like bare
+ * drive live at that capacity. "No comparison available" is a true statement;
+ * a comparison against a different capacity is not.
+ */
+function shuckComparison(
+  row: DriveRow,
+  pptCents: number,
+  bare: Map<string, BareCandidate>,
+): ShuckComparison | null {
+  if (!row.shuckable) return null;
+
+  const candidate = bare.get(bareKey(row.capacityBytes, row.condition));
+  if (!candidate) return null;
+
+  return {
+    barePptCents: candidate.pptCents,
+    bareLabel: candidate.label,
+    savingPptCents: candidate.pptCents - pptCents,
   };
 }
 

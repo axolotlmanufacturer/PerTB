@@ -23,6 +23,7 @@ export function TablePage({
   above,
   below,
   action,
+  shuckColumn,
 }: {
   view: TableViewModel;
   query: Query;
@@ -34,24 +35,30 @@ export function TablePage({
   below?: React.ReactNode;
   /** Form target, so filtering from a landing stays on that landing. */
   action: string;
+  /** Only the shucking view asks for the external-vs-bare column. */
+  shuckColumn?: boolean;
 }) {
   return (
-    <main style={{ maxWidth: '96rem', margin: '0 auto', padding: '1.25rem' }}>
+    <main className="shell">
       {above}
 
-      <header style={headerStyle}>
-        <h1 style={{ fontSize: '1.1rem', margin: 0 }}>{heading}</h1>
-        <Link href="/" style={{ fontSize: '12px' }}>
-          {SITE_NAME}
-        </Link>
+      <header className="masthead">
+        <h1 className="masthead__title">{heading}</h1>
+        {/* The way back to the full table — but not on the full table itself,
+            where it would just be the heading printed twice. */}
+        {heading !== SITE_NAME && (
+          <Link href="/" className="masthead__home">
+            All drives · {SITE_NAME}
+          </Link>
+        )}
       </header>
 
-      {intro && <p style={introStyle}>{intro}</p>}
+      {intro && <p className="intro">{intro}</p>}
 
       <DispersionStrip view={view} />
 
-      <div style={layout}>
-        <aside style={rail}>
+      <div className="layout">
+        <aside className="layout__rail">
           <FacetRail
             query={query}
             counts={view.facetCounts}
@@ -60,8 +67,8 @@ export function TablePage({
           />
         </aside>
 
-        <section style={{ minWidth: 0 }}>
-          <DriveTable view={view} query={query} subId={subId} />
+        <section className="layout__main">
+          <DriveTable view={view} query={query} subId={subId} shuckColumn={shuckColumn} />
           {below}
         </section>
       </div>
@@ -70,29 +77,3 @@ export function TablePage({
     </main>
   );
 }
-
-const headerStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'baseline',
-  justifyContent: 'space-between',
-  gap: '0.75rem',
-  borderBottom: '1px solid var(--border)',
-  paddingBottom: '0.6rem',
-  marginBottom: '0.75rem',
-  flexWrap: 'wrap',
-};
-
-const introStyle: React.CSSProperties = {
-  margin: '0 0 1rem',
-  color: 'var(--fg-muted)',
-  maxWidth: '78ch',
-};
-
-const layout: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: 'minmax(190px, 220px) minmax(0, 1fr)',
-  gap: '1.5rem',
-  alignItems: 'start',
-};
-
-const rail: React.CSSProperties = { position: 'sticky', top: '1rem' };

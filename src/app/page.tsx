@@ -1,6 +1,6 @@
 import { ItemListJsonLd } from '@/components/Seo';
 import { TablePage } from '@/components/TableView';
-import { loadDriveRows } from '@/lib/offers';
+import { loadDriveRows, loadPriceHistory } from '@/lib/offers';
 import { parseQuery } from '@/lib/query';
 import { SITE_NAME, SITE_TAGLINE } from '@/lib/site';
 import { buildTable } from '@/lib/table';
@@ -25,7 +25,10 @@ export default async function HomePage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const query = parseQuery(await searchParams);
-  const view = buildTable(await loadDriveRows(), query);
+
+  const now = new Date();
+  const [rows, history] = await Promise.all([loadDriveRows(now), loadPriceHistory(now)]);
+  const view = buildTable(rows, query, { history, now: now.getTime() });
 
   return (
     <>

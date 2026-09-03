@@ -15,7 +15,7 @@ import {
   resolveLandingQuery,
   type Landing,
 } from '@/lib/landings';
-import { loadDriveRows } from '@/lib/offers';
+import { loadDriveRows, loadPriceHistory } from '@/lib/offers';
 import { parseQuery } from '@/lib/query';
 import { SITE_NAME, SITE_URL } from '@/lib/site';
 import { buildTable } from '@/lib/table';
@@ -96,7 +96,10 @@ export default async function LandingPage({
   // The landing's filters are the base; anything the visitor sets in the rail
   // overrides that key, so the rail is a live control rather than decoration.
   const query = resolveLandingQuery(landing, parseQuery(await searchParams));
-  const view = buildTable(await loadDriveRows(), query);
+
+  const now = new Date();
+  const [rows, history] = await Promise.all([loadDriveRows(now), loadPriceHistory(now)]);
+  const view = buildTable(rows, query, { history, now: now.getTime() });
 
   const crumbs = crumbsFor(landing);
 
@@ -112,6 +115,9 @@ export default async function LandingPage({
         action={landingPath(landing)}
         heading={landing.title}
         intro={landing.intro}
+        // The shucking view earns a dedicated external-vs-bare column
+        // (ticket 5.4); everywhere else the delta rides along as a chip.
+        shuckColumn={landing.filters.shuckable === true}
         above={<Breadcrumb crumbs={crumbs} />}
         below={<RelatedViews landing={landing} />}
       />

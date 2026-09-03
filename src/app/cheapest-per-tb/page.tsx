@@ -8,7 +8,7 @@ import {
 } from '@/components/Seo';
 import { TablePage } from '@/components/TableView';
 import { CHEAPEST_LANDING, resolveRelated } from '@/lib/landings';
-import { loadDriveRows } from '@/lib/offers';
+import { loadDriveRows, loadPriceHistory } from '@/lib/offers';
 import { parseQuery } from '@/lib/query';
 import { SITE_NAME, SITE_URL } from '@/lib/site';
 import { buildTable } from '@/lib/table';
@@ -49,7 +49,10 @@ export default async function CheapestPerTbPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const query = parseQuery(await searchParams);
-  const view = buildTable(await loadDriveRows(), query);
+
+  const now = new Date();
+  const [rows, history] = await Promise.all([loadDriveRows(now), loadPriceHistory(now)]);
+  const view = buildTable(rows, query, { history, now: now.getTime() });
 
   // Reuses the shared related-views block by borrowing a category for
   // resolution; the links themselves are the same curated set.

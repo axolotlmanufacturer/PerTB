@@ -1,3 +1,4 @@
+import { HISTORY_WINDOW_DAYS, type HistoryIndex, type PriceObservation } from './history';
 import { CONFIDENCE_THRESHOLD } from './normalize';
 import { fromPrismaFormFactor } from './prisma-enums';
 import { prisma } from './db';
@@ -15,7 +16,10 @@ import type { DriveRow } from './table';
  * Everything downstream — facet counts, collapse, sorting, dispersion — works
  * on the rows this returns, in memory.
  */
-export async function loadDriveRows(now: Date = new Date()): Promise<DriveRow[]> {
+export async function loadDriveRows(
+  now: Date = new Date(),
+  options: { productId?: string } = {},
+): Promise<DriveRow[]> {
   const offers = await prisma.offer.findMany({
     where: {
       // Structural, not procedural. A row past its expiry is not displayable,
@@ -24,6 +28,10 @@ export async function loadDriveRows(now: Date = new Date()): Promise<DriveRow[]>
       // A listing whose specification we could not resolve confidently never
       // reaches a user. It is visible only in /admin/quarantine.
       product: { confidence: { gte: CONFIDENCE_THRESHOLD } },
+      // The detail view narrows to one drive. Everything else about the query
+      // — both filters above included — stays identical, so a product page
+      // cannot show a row the table would have withheld.
+      ...(options.productId ? { productId: options.productId } : {}),
     },
     select: {
       id: true,
@@ -90,4 +98,66 @@ export async function loadDriveRows(now: Date = new Date()): Promise<DriveRow[]>
 
     url: offer.url,
   }));
+}
+
+/**
+ * The 90-day price history for live, publishable offers (ticket 5.1).
+ *
+ * One query, indexed on `observedAt`, mirroring the two non-negotiable filters
+ * in `loadDriveRows` — an expired or quarantined offer has no display surface,
+ * so loading its history would be work done for nothing.
+ *
+ * The volume stays modest because a PricePoint is written only when a price
+ * actually moves (CLAUDE.md §3.4); writing one every sweep would make this
+ * query eight times the catalogue per day.
+ *
+ * NOTE: PricePoint cascades from Offer, and the expiry pass hard-deletes
+ * offers. History therefore reaches back only as far as a listing has been
+ * continuously live — see the Phase 5 note in README.md.
+ */
+export async function loadPriceHistory(
+  now: Date = new Date(),
+  options: { productId?: string; windowDays?: number } = {},
+): Promise<HistoryIndex> {
+  const { productId, windowDays = HISTORY_WINDOW_DAYS } = options;
+  const since = new Date(now.getTime() - windowDays * 24 * 60 * 60 * 1000);
+
+  const points = await prisma.pricePoint.findMany({
+    where: {
+      observedAt: { gte: since },
+      offer: {
+        expiresAt: { gt: now },
+        product: { confidence: { gte: CONFIDENCE_THRESHOLD } },
+        ...(productId ? { productId } : {}),
+      },
+    },
+    select: {
+      offerId: true,
+      priceCents: true,
+      shippingCents: true,
+      observedAt: true,
+    },
+    orderBy: { observedAt: 'asc' },
+  });
+
+  const index = new Map<string, PriceObservation[]>();
+  for (const point of points) {
+    const observation: PriceObservation = {
+      at: point.observedAt.getTime(),
+      priceCents: point.priceCents,
+      shippingCents: point.shippingCents,
+    };
+    const existing = index.get(point.offerId);
+    if (existing) existing.push(observation);
+    else index.set(point.offerId, [observation]);
+  }
+  return index;
+}
+
+/** One product's live offers, for the history detail view (ticket 5.3). */
+export async function loadProductRows(
+  productId: string,
+  now: Date = new Date(),
+): Promise<DriveRow[]> {
+  return loadDriveRows(now, { productId });
 }

@@ -2,6 +2,11 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  // tsconfig says jsx: "preserve" because Next does its own transform. Vitest
+  // has no such downstream step, so its own transformer (oxc, under Vite 8)
+  // has to be told to compile JSX or test/unit/drive-table.test.tsx will not
+  // parse.
+  oxc: { jsx: { runtime: 'automatic' } },
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -9,7 +14,9 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['test/**/*.test.ts', 'src/**/*.test.ts'],
+    // .tsx too: the table is a server component and the only way to prove its
+    // markup is to render it (test/unit/drive-table.test.tsx).
+    include: ['test/**/*.test.ts', 'test/**/*.test.tsx', 'src/**/*.test.ts'],
     // Playwright owns e2e; vitest must not try to run those specs.
     exclude: ['node_modules/**', '.next/**', 'e2e/**'],
     // Phase 0 ships a near-empty suite by design (ticket 0.4).

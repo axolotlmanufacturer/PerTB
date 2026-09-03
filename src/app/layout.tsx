@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Analytics } from '@/lib/analytics';
+import { Consent } from '@/components/Consent';
 import { SITE_NAME, SITE_TAGLINE, SITE_URL } from '@/lib/site';
 import './globals.css';
 
@@ -19,7 +19,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         {children}
-        <Analytics />
+        <Consent />
       </body>
     </html>
   );

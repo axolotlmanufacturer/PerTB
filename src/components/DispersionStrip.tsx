@@ -37,11 +37,11 @@ export function DispersionStrip({ view }: { view: TableView }) {
               (Math.log10(max) - Math.log10(min)));
 
   return (
-    <figure style={{ margin: '0 0 1rem' }}>
+    <figure className="dispersion">
       <svg
         viewBox={`0 0 ${width} ${height}`}
         preserveAspectRatio="none"
-        style={{ width: '100%', height: `${height}px`, display: 'block' }}
+        className="dispersion__svg"
         role="img"
         aria-label={`Price per terabyte distribution across ${ticks.length} listings, from ${formatDollars(min / 100)} to ${formatDollars(max / 100)} per terabyte, on a logarithmic scale`}
       >
@@ -86,15 +86,7 @@ export function DispersionStrip({ view }: { view: TableView }) {
         )}
       </svg>
 
-      <figcaption
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          color: 'var(--fg-muted)',
-          fontSize: '11px',
-        }}
-        className="tabular"
-      >
+      <figcaption className="dispersion__legend tabular">
         <span>{formatDollars(min / 100)}/TB</span>
         <span>
           log scale · {view.matchedOffers.toLocaleString('en-US')} of{' '}

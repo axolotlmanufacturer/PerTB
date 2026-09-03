@@ -67,35 +67,32 @@ export function FacetRail({
       method="GET"
       action={action}
       onChange={submitNow}
-      style={{ fontSize: '13px' }}
+      className="rail"
       aria-busy={pending}
     >
-      <div style={headerRow}>
-        <strong>Filters</strong>
+      <div className="rail__head">
+        <span className="rail__title">Filters</span>
         {activeCount > 0 && (
           // Renders a real <a href="/">, so reset works with JavaScript off
           // and does a client transition when it is on.
-          <Link href={action} style={{ fontSize: '12px' }} data-testid="reset-filters">
+          <Link href={action} className="rail__reset" data-testid="reset-filters">
             reset ({activeCount})
           </Link>
         )}
       </div>
 
       {AXES.map((axis) => (
-        <fieldset key={axis} style={fieldset}>
-          <legend style={legend}>{AXIS_LABELS[axis]}</legend>
+        <fieldset key={axis} className="facet">
+          <legend className="facet__legend">{AXIS_LABELS[axis]}</legend>
           {(AXIS_KEYS[axis] as readonly string[]).map((value) => {
             const count = counts[axis][value] ?? 0;
             const checked = (query[axis] as readonly string[]).includes(value);
             return (
               <label
                 key={value}
-                style={{
-                  ...option,
-                  // Zero-count options stay visible and clickable: they are how
-                  // a user discovers what widening the filter would show.
-                  color: count === 0 && !checked ? 'var(--fg-muted)' : 'inherit',
-                }}
+                // Zero-count options stay visible and clickable: they are how
+                // a user discovers what widening the filter would show.
+                className={`opt${count === 0 && !checked ? ' opt--empty' : ''}`}
               >
                 <input
                   type="checkbox"
@@ -106,8 +103,7 @@ export function FacetRail({
                 />
                 <span>{labelFor(axis as Axis, value as never)}</span>
                 <span
-                  className="tabular"
-                  style={countStyle}
+                  className="opt__count tabular"
                   data-testid={`count-${axis}-${value}`}
                 >
                   {count}
@@ -118,9 +114,9 @@ export function FacetRail({
         </fieldset>
       ))}
 
-      <fieldset style={fieldset}>
-        <legend style={legend}>Capacity (TB)</legend>
-        <div style={{ display: 'flex', gap: '0.4rem' }}>
+      <fieldset className="facet">
+        <legend className="facet__legend">Capacity (TB)</legend>
+        <div className="rail__range">
           <input
             type="number"
             name="capMin"
@@ -129,7 +125,7 @@ export function FacetRail({
             max={40}
             step="any"
             defaultValue={query.capMin ?? ''}
-            style={numberInput}
+            className="field"
             aria-label="Minimum capacity in terabytes"
           />
           <input
@@ -140,14 +136,14 @@ export function FacetRail({
             max={40}
             step="any"
             defaultValue={query.capMax ?? ''}
-            style={numberInput}
+            className="field"
             aria-label="Maximum capacity in terabytes"
           />
         </div>
       </fieldset>
 
-      <fieldset style={fieldset}>
-        <legend style={legend}>Adjustments</legend>
+      <fieldset className="facet">
+        <legend className="facet__legend">Adjustments</legend>
 
         {/*
           Shipping defaults to ON. Without it, eBay's $0.99-item-plus-$28-
@@ -156,7 +152,7 @@ export function FacetRail({
           checkbox submits nothing at all.
         */}
         <input type="hidden" name="shipping" value="0" />
-        <label style={option}>
+        <label className="opt">
           <input
             type="checkbox"
             name="shipping"
@@ -168,7 +164,7 @@ export function FacetRail({
         </label>
 
         <input type="hidden" name="hideLots" value="0" />
-        <label style={option}>
+        <label className="opt">
           <input
             type="checkbox"
             name="hideLots"
@@ -180,7 +176,7 @@ export function FacetRail({
         </label>
 
         <input type="hidden" name="inStock" value="0" />
-        <label style={option}>
+        <label className="opt">
           <input
             type="checkbox"
             name="inStock"
@@ -192,12 +188,12 @@ export function FacetRail({
         </label>
       </fieldset>
 
-      <fieldset style={fieldset}>
-        <legend style={legend}>Sort</legend>
+      <fieldset className="facet">
+        <legend className="facet__legend">Sort</legend>
         <select
           name="sort"
           defaultValue={query.sort}
-          style={select}
+          className="field"
           aria-label="Sort order"
         >
           <option value="ppt_asc">$/TB, cheapest first</option>
@@ -213,7 +209,7 @@ export function FacetRail({
         page depends on it when JS is off.
       */}
       <noscript>
-        <button type="submit" style={applyButton}>
+        <button type="submit" className="btn">
           Apply filters
         </button>
       </noscript>
@@ -222,61 +218,3 @@ export function FacetRail({
 }
 
 export const FACET_DEFAULTS = { ...DEFAULT_ADJUSTMENTS, sort: DEFAULT_SORT };
-
-const headerRow: React.CSSProperties = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'baseline',
-  marginBottom: '0.5rem',
-};
-
-const fieldset: React.CSSProperties = {
-  border: 0,
-  borderTop: '1px solid var(--border)',
-  margin: '0 0 0.5rem',
-  padding: '0.5rem 0 0',
-};
-
-const legend: React.CSSProperties = {
-  padding: 0,
-  fontWeight: 600,
-  fontSize: '12px',
-  color: 'var(--fg-muted)',
-};
-
-const option: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '0.35rem',
-  padding: '0.1rem 0',
-  cursor: 'pointer',
-};
-
-const countStyle: React.CSSProperties = {
-  marginLeft: 'auto',
-  color: 'var(--fg-muted)',
-  fontSize: '11px',
-};
-
-const numberInput: React.CSSProperties = {
-  width: '100%',
-  minWidth: 0,
-  padding: '0.2rem 0.3rem',
-  border: '1px solid var(--border)',
-  borderRadius: '3px',
-  background: 'var(--bg)',
-  color: 'var(--fg)',
-  fontSize: '12px',
-};
-
-const select: React.CSSProperties = { ...numberInput, width: '100%' };
-
-const applyButton: React.CSSProperties = {
-  marginTop: '0.5rem',
-  padding: '0.3rem 0.6rem',
-  border: '1px solid var(--border)',
-  borderRadius: '3px',
-  background: 'var(--bg-subtle)',
-  color: 'var(--fg)',
-  cursor: 'pointer',
-};

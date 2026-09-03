@@ -16,12 +16,12 @@ export function RelatedViews({ landing }: { landing: Landing }) {
   if (related.length === 0) return null;
 
   return (
-    <nav aria-label="Related views" style={wrapper}>
-      <h2 style={heading}>Related</h2>
-      <ul style={list}>
+    <nav aria-label="Related views" className="related">
+      <h2 className="related__heading">Related</h2>
+      <ul className="related__list">
         {related.map((item) => (
           <li key={`${item.category}/${item.slug}`}>
-            <Link href={landingPath(item)} style={chip}>
+            <Link href={landingPath(item)} className="related__link">
               {item.label}
             </Link>
           </li>
@@ -30,34 +30,3 @@ export function RelatedViews({ landing }: { landing: Landing }) {
     </nav>
   );
 }
-
-const wrapper: React.CSSProperties = {
-  marginTop: '1.5rem',
-  paddingTop: '0.75rem',
-  borderTop: '1px solid var(--border)',
-};
-
-const heading: React.CSSProperties = {
-  fontSize: '12px',
-  fontWeight: 600,
-  color: 'var(--fg-muted)',
-  margin: '0 0 0.4rem',
-};
-
-const list: React.CSSProperties = {
-  display: 'flex',
-  flexWrap: 'wrap',
-  gap: '0.4rem',
-  listStyle: 'none',
-  margin: 0,
-  padding: 0,
-};
-
-const chip: React.CSSProperties = {
-  display: 'inline-block',
-  padding: '0.15rem 0.45rem',
-  border: '1px solid var(--border)',
-  borderRadius: '3px',
-  fontSize: '12px',
-  textDecoration: 'none',
-};

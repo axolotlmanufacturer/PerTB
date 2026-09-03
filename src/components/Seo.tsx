@@ -83,33 +83,21 @@ export function ItemListJsonLd({
 
 export function Breadcrumb({ crumbs }: { crumbs: Crumb[] }) {
   return (
-    <nav aria-label="Breadcrumb" style={{ fontSize: '12px', marginBottom: '0.5rem' }}>
-      <ol
-        style={{
-          display: 'flex',
-          gap: '0.4rem',
-          listStyle: 'none',
-          margin: 0,
-          padding: 0,
-        }}
-      >
-        {crumbs.map((crumb, i) => (
-          <li key={crumb.path} style={{ display: 'flex', gap: '0.4rem' }}>
-            {i > 0 && (
-              <span aria-hidden="true" style={{ color: 'var(--fg-muted)' }}>
-                /
-              </span>
-            )}
-            {i === crumbs.length - 1 ? (
-              <span aria-current="page" style={{ color: 'var(--fg-muted)' }}>
-                {crumb.name}
-              </span>
-            ) : (
-              <Link href={crumb.path}>{crumb.name}</Link>
-            )}
-          </li>
-        ))}
-      </ol>
+    <nav aria-label="Breadcrumb" className="crumbs">
+      {crumbs.map((crumb, i) => (
+        <span key={crumb.path}>
+          {i > 0 && (
+            <span aria-hidden="true" className="crumbs__sep">
+              /
+            </span>
+          )}
+          {i === crumbs.length - 1 ? (
+            <span aria-current="page">{crumb.name}</span>
+          ) : (
+            <Link href={crumb.path}>{crumb.name}</Link>
+          )}
+        </span>
+      ))}
     </nav>
   );
 }

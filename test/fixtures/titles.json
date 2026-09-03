@@ -1,0 +1,2871 @@
+{
+  "about": [
+    "Golden corpus for normalize.ts. Ticket 1.5.",
+    "",
+    "Titles are written in the messy style real Amazon and eBay listings use —",
+    "inconsistent spacing, mixed units, marketing noise, model numbers dropped",
+    "mid-string — so normalisation is genuinely tested rather than fed clean input.",
+    "",
+    "PROVENANCE: these are constructed, not harvested. Fetching real listing",
+    "titles would mean pulling retailer HTML, which CLAUDE.md §1.2 forbids",
+    "outright, and the official APIs need credentials this repository does not",
+    "have. They are modelled on real listing conventions and real product names.",
+    "",
+    "capacityTb is decimal terabytes (null when the title yields no defensible",
+    "capacity). publishable mirrors isPublishable(): false means the listing is",
+    "quarantined, which is a correct outcome, not a gap to close."
+  ],
+  "cases": [
+    {
+      "title": "Seagate IronWolf Pro 20TB NAS Internal HDD CMR 3.5\" SATA 6Gb/s 7200 RPM 256MB",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 20,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate IronWolf 8TB NAS Hard Drive ST8000VN004 3.5 inch SATA 7200RPM 256MB",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate IronWolf Pro 12TB ST12000NE0008 NAS HDD 7200RPM SATA III 3.5\"",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 12,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X18 18TB 7200 RPM 3.5\" SATA 6Gb/s 512e/4Kn Enterprise Hard Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 18,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X20 20TB SAS 12Gb/s 3.5in Enterprise Hard Drive ST20000NM002D",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 20,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X16 14TB SATA 6Gb/s 7200RPM 3.5\" Enterprise HDD ST14000NM001G",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 14,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X24 24TB 3.5\" SATA 6Gb/s 7200 RPM Enterprise Class Hard Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 24,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos 7E8 8TB 7200RPM SATA 6Gb/s 3.5 Enterprise ST8000NM000A",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate SkyHawk 10TB Surveillance Hard Drive 3.5\" SATA 7200RPM ST10000VE0008",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 10,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate SkyHawk AI 16TB Video Surveillance HDD 7200 RPM SATA 3.5 inch",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate BarraCuda 4TB ST4000DM004 3.5\" SATA 5400RPM Desktop Hard Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "hdd_smr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate BarraCuda 8TB 5400 RPM 3.5 Inch SMR Desktop Hard Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_smr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate BarraCuda Pro 6TB 7200RPM 3.5 inch SATA 128MB Cache Hard Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 6,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Constellation ES.3 4TB 7200RPM SAS 6Gb/s 3.5\" ST4000NM0023",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Archive HDD 8TB ST8000AS0002 SMR 5900RPM 3.5\" SATA",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_smr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Red Plus 8TB NAS Hard Drive WD80EFZZ 3.5\" SATA 5640 RPM 256MB Cache",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Red Pro 22TB NAS HDD 7200 RPM SATA 6Gb/s 3.5-inch WD221KFGX",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 22,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Western Digital WD Gold 18TB Enterprise Class HDD 7200RPM SATA 3.5\"",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 18,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Ultrastar DC HC550 16TB SATA 6Gb/s 7200RPM 3.5\" Data Center Hard Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "HGST Ultrastar He10 10TB SAS 12Gb/s 7200RPM 3.5 HUH721010AL4200",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 10,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Purple 8TB Surveillance Hard Drive 3.5\" SATA 6Gb/s WD84PURZ",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Purple Pro 14TB Smart Video Hard Drive 7200RPM SATA 3.5 inch",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 14,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Blue 8TB WD80EAZZ 3.5\" SATA 5640RPM CMR Desktop Hard Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Blue 6TB WD60EZAZ 5400RPM 3.5\" SATA Desktop HDD Bare Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 6,
+        "technology": "hdd_smr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Red 4TB WD40EFAX NAS Hard Drive 3.5\" SATA 5400RPM 64MB",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "hdd_smr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Red 6TB WD60EFRX NAS Hard Drive 3.5 inch SATA 5400RPM CMR",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 6,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Western Digital VelociRaptor 1TB 10000RPM SATA 6Gb/s 3.5\" WD1000DHTZ",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD White Label WD80EDAZ 8TB 3.5\" SATA 5640RPM Shucked From Elements",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba MG08ACA16TE 16TB 7200RPM SATA 6Gb/s 3.5\" Enterprise Hard Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba MG09ACA18TE 18TB SATA 512e 7200 RPM 3.5 inch Enterprise HDD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 18,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba MN08ACA14T 14TB NAS Hard Drive 7200RPM SATA 6.0Gb/s 3.5\"",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 14,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba N300 12TB NAS Internal Hard Drive 7200 RPM SATA 3.5 Inch",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 12,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba X300 8TB Performance Internal Hard Drive 7200RPM SATA 3.5\"",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba S300 6TB Surveillance Hard Drive SATA 3.5 inch 5400RPM",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 6,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "HGST Deskstar NAS 8TB 7200RPM SATA 6Gb/s 3.5\" HDN728080ALE604",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Enterprise Performance 15K 900GB SAS 12Gb/s 2.5\" ST900MP0146",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 0.9,
+        "technology": "hdd_cmr",
+        "formFactor": "2.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "HGST Travelstar 1TB 2.5 inch SATA 7200RPM Laptop Hard Drive HTS721010A9E630",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "hdd_cmr",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate ST1000LM035 1TB 2.5\" SATA 5400RPM Laptop Thin Mobile Hard Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "hdd_smr",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD10SPZX WD Blue 1TB 2.5\" SATA 5400RPM 7mm Laptop Hard Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "hdd_cmr",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba MQ04ABF100 1TB 2.5 inch SATA 5400RPM SMR Mobile Hard Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "hdd_smr",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 990 PRO 2TB PCIe 4.0 NVMe M.2 2280 Internal SSD 7450 MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 990 PRO 4TB NVMe M.2 SSD MZ-V9P4T0BW Gen4 x4 Internal",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 990 EVO Plus 2TB M.2 2280 NVMe SSD PCIe 4.0 Internal Solid State",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 980 PRO 1TB PCIe Gen4 NVMe M.2 2280 SSD MZ-V8P1T0B",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 970 EVO Plus 2TB NVMe M.2 2280 PCIe 3.0 x4 Internal SSD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 970 PRO 1TB MLC NVMe M.2 2280 PCIe 3.0 Internal SSD MZ-V7P1T0BW",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_mlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 9100 PRO 4TB PCIe 5.0 NVMe M.2 2280 SSD Gen5 x4 14800MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie5",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD_BLACK SN770M 2TB M.2 2230 NVMe SSD for Steam Deck PCIe Gen4",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2230",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD_BLACK SN850X 4TB NVMe M.2 2280 SSD PCIe Gen4 x4 7300MB/s Gaming",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD_BLACK SN8100 2TB PCIe Gen5 NVMe M.2 2280 SSD 14900 MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie5",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Blue SN580 1TB NVMe M.2 2280 PCIe Gen4 Internal SSD WDS100T3B0E",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Blue SN570 2TB NVMe M.2 2280 PCIe Gen3 x4 Internal Solid State Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Red SN700 4TB NVMe M.2 2280 SSD for NAS PCIe Gen3 WDS400T1R0C",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Crucial T705 2TB PCIe Gen5 NVMe M.2 2280 SSD 14500MB/s CT2000T705SSD3",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie5",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Crucial T700 4TB Gen5 NVMe M.2 SSD with Heatsink 12400 MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie5",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Crucial T500 2TB PCIe Gen4 NVMe M.2 2280 Internal SSD CT2000T500SSD8",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Crucial P3 Plus 4TB PCIe Gen4 NVMe M.2 2280 SSD 5000MB/s QLC",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_qlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Crucial P3 1TB PCIe 3.0 NVMe M.2 2280 Internal SSD 3500MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_qlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Crucial P310 1TB M.2 2230 PCIe Gen4 NVMe SSD for Steam Deck Handheld",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_qlc",
+        "formFactor": "m2_2230",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "SK hynix Platinum P41 2TB PCIe NVMe Gen4 M.2 2280 SSD 7000MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "SK hynix Gold P31 1TB PCIe NVMe Gen3 M.2 2280 Internal SSD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Solidigm P44 Pro 2TB PCIe Gen4 NVMe M.2 2280 SSD 7000 MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Solidigm P41 Plus 2TB QLC PCIe Gen4 NVMe M.2 2280 Internal SSD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_qlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Kingston KC3000 2TB PCIe 4.0 NVMe M.2 2280 SSD 7000MB/s SKC3000D/2048G",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Kingston FURY Renegade 4TB PCIe Gen4 NVMe M.2 2280 SSD with Heatsink",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate FireCuda 530 2TB NVMe M.2 2280 PCIe Gen4 SSD 7300MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate FireCuda 540 2TB PCIe Gen5 NVMe M.2 2280 SSD 10000MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie5",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Lexar NM790 4TB M.2 2280 PCIe Gen4x4 NVMe SSD 7400MB/s Internal",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Corsair MP700 PRO 2TB PCIe Gen5 x4 NVMe M.2 SSD 12400MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie5",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Sabrent Rocket 4 Plus 8TB NVMe M.2 2280 PCIe Gen4 SSD SB-RKT4P-8TB",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Intel 670p 2TB QLC NVMe M.2 2280 PCIe 3.0 x4 Internal SSD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_qlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "KIOXIA XG8 1TB M.2 2280 NVMe PCIe Gen4 SSD OEM Pull KXG80ZNV1T02",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Micron 7450 PRO 7.68TB U.3 NVMe PCIe 4.0 Enterprise SSD 1 DWPD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 7.68,
+        "technology": "ssd_tlc",
+        "formFactor": "u2",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Micron 9400 PRO 15.36TB U.3 NVMe PCIe Gen4 Enterprise SSD MTFDKCC15T3TGH",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 15.36,
+        "technology": "ssd_tlc",
+        "formFactor": "u2",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung PM9A3 3.84TB U.2 NVMe PCIe 4.0 Enterprise SSD MZQL23T8HCLS",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 3.84,
+        "technology": "ssd_tlc",
+        "formFactor": "u2",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung PM983 1.92TB U.2 NVMe PCIe 3.0 x4 Enterprise SSD 2.5\"",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1.92,
+        "technology": "ssd_tlc",
+        "formFactor": "u2",
+        "interface": "pcie3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Solidigm D7-P5520 7.68TB U.2 NVMe PCIe Gen4 Data Center SSD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 7.68,
+        "technology": "ssd_tlc",
+        "formFactor": "u2",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Solidigm D5-P5316 30.72TB U.2 QLC NVMe PCIe 4.0 Enterprise SSD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 30.72,
+        "technology": "ssd_qlc",
+        "formFactor": "u2",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Intel DC P4510 4TB U.2 NVMe PCIe 3.1 x4 2.5\" Enterprise SSD SSDPE2KX040T8",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "u2",
+        "interface": "pcie3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "KIOXIA CM6-R 7.68TB U.3 NVMe PCIe Gen4 Enterprise SSD KCM61RUL7T68",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 7.68,
+        "technology": "ssd_tlc",
+        "formFactor": "u2",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 870 EVO 4TB 2.5\" SATA III Internal SSD MZ-77E4T0B/AM",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 870 QVO 8TB 2.5 Inch SATA III Internal SSD QLC MZ-77Q8T0B",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "ssd_qlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 860 PRO 1TB MLC 2.5\" SATA III Internal SSD MZ-76P1T0BW",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_mlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Crucial MX500 2TB 3D NAND SATA 2.5 Inch Internal SSD CT2000MX500SSD1",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "SK hynix Gold S31 1TB SATA III 2.5 inch Internal SSD 560MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Kingston KC600 2TB SATA III 2.5\" Internal SSD SKC600/2048G",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Micron 5400 PRO 3.84TB SATA 6Gb/s 2.5\" Enterprise SSD MTFDDAK3T8TGA",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 3.84,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung PM893 1.92TB SATA 6Gb/s 2.5\" Enterprise SSD MZ7L31T9HBLT",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1.92,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Intel DC S4510 3.84TB SATA 6Gb/s 2.5 inch Enterprise SSD SSDSC2KB038T8",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 3.84,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Kingston DC600M 3.84TB SATA 6Gb/s 2.5\" Enterprise Data Center SSD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 3.84,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Red SA500 4TB SATA III 2.5\" NAS SSD WDS400T1R0A",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Intel 545s 512GB SATA III 2.5 inch Internal SSD TLC SSDSC2KW512G8X1",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 0.512,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung T7 Shield 4TB Portable SSD USB 3.2 Gen 2 IP65 Rugged",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "ext_portable",
+        "interface": "usb_g2",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung T9 Portable SSD 4TB USB 3.2 Gen 2x2 20Gbps External MU-PG4T0B",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "ext_portable",
+        "interface": "usb_g2x2",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung T5 Portable SSD 1TB USB 3.1 Gen 2 External Solid State Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "ext_portable",
+        "interface": "usb_g2",
+        "publishable": true
+      }
+    },
+    {
+      "title": "SanDisk Extreme Portable SSD 4TB USB 3.2 Gen 2 1050MB/s External",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "ext_portable",
+        "interface": "usb_g2",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Crucial X10 Pro 4TB Portable SSD USB 3.2 Gen 2x2 2100MB/s External",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "ext_portable",
+        "interface": "usb_g2x2",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Kingston XS2000 2TB Portable SSD USB 3.2 Gen 2x2 20Gbps External",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "ext_portable",
+        "interface": "usb_g2x2",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Elements Desktop 18TB External Hard Drive USB 3.0 WDBWLG0180HBK",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 18,
+        "technology": "hdd_cmr",
+        "formFactor": "ext_desktop",
+        "interface": "usb_g1",
+        "publishable": false
+      }
+    },
+    {
+      "title": "WD easystore 14TB External Desktop Hard Drive USB 3.0 Shuckable",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 14,
+        "technology": "hdd_cmr",
+        "formFactor": "ext_desktop",
+        "interface": "usb_g1",
+        "publishable": false
+      }
+    },
+    {
+      "title": "WD My Book 22TB External Desktop Hard Drive USB 3.0 Backup Storage",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 22,
+        "technology": "hdd_cmr",
+        "formFactor": "ext_desktop",
+        "interface": "usb_g1",
+        "publishable": false
+      }
+    },
+    {
+      "title": "WD My Passport 5TB Portable External Hard Drive USB 3.0 Slim",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 5,
+        "technology": "hdd_smr",
+        "formFactor": "ext_portable",
+        "interface": "usb_g1",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Expansion Desktop 16TB External Hard Drive USB 3.0 STKP16000400",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "ext_desktop",
+        "interface": "usb_g1",
+        "publishable": false
+      }
+    },
+    {
+      "title": "Seagate Expansion Portable 5TB External Hard Drive USB 3.0 2.5 inch",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 5,
+        "technology": "hdd_smr",
+        "formFactor": "ext_portable",
+        "interface": "usb_g1",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate One Touch 4TB Portable External Hard Drive USB 3.0 Rose Gold",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "hdd_smr",
+        "formFactor": "ext_portable",
+        "interface": "usb_g1",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba Canvio Basics 4TB Portable External Hard Drive USB 3.0 Black",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "hdd_smr",
+        "formFactor": "ext_portable",
+        "interface": "usb_g1",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Lot of 5 Seagate Exos X16 16TB SAS 12Gb/s 3.5\" Enterprise HDD 24,500 hours",
+      "expect": {
+        "lotSize": 5,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Lot of 10 HGST Ultrastar 8TB SAS 7200RPM 3.5\" Enterprise Hard Drives Tested",
+      "expect": {
+        "lotSize": 10,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Lot of 2 Samsung 870 EVO 1TB 2.5\" SATA SSD Internal Solid State Drives",
+      "expect": {
+        "lotSize": 2,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Lot of 12 Seagate Exos X14 14TB SATA 3.5 inch Enterprise Hard Drives",
+      "expect": {
+        "lotSize": 12,
+        "capacityTb": 14,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "4 x 8TB HGST Ultrastar He8 SAS Hard Drive Tested",
+      "expect": {
+        "lotSize": 4,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "6 x 12TB Seagate Exos X12 SATA 7200RPM 3.5\" Enterprise HDD Pulls",
+      "expect": {
+        "lotSize": 6,
+        "capacityTb": 12,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "2 x 4TB WD Red Plus NAS Hard Drive 3.5 inch SATA CMR WD40EFPX",
+      "expect": {
+        "lotSize": 2,
+        "capacityTb": 4,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "8 x 16TB Toshiba MG08 SATA 7200 RPM 3.5\" Enterprise Hard Drives",
+      "expect": {
+        "lotSize": 8,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "3 x 2TB Samsung 990 PRO NVMe M.2 2280 PCIe Gen4 SSD Bundle",
+      "expect": {
+        "lotSize": 3,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X18 18TB 6-pack SATA 7200RPM 3.5 inch Enterprise Drives",
+      "expect": {
+        "lotSize": 6,
+        "capacityTb": 18,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Red Plus 4TB NAS HDD 4-pack 3.5\" SATA 5400RPM CMR Bundle",
+      "expect": {
+        "lotSize": 4,
+        "capacityTb": 4,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Crucial MX500 1TB 2.5 inch SATA SSD 10-pack Internal Solid State Drives",
+      "expect": {
+        "lotSize": 10,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate IronWolf 8TB NAS Hard Drive 5 pack 3.5\" SATA 7200RPM",
+      "expect": {
+        "lotSize": 5,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "HGST Ultrastar He12 12TB SAS 3.5\" Enterprise HDD qty 3 Tested Pulls",
+      "expect": {
+        "lotSize": 3,
+        "capacityTb": 12,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung PM883 960GB SATA 2.5\" Enterprise SSD Qty: 8 Data Center Pulls",
+      "expect": {
+        "lotSize": 8,
+        "capacityTb": 0.96,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X20 20TB SATA 3.5 inch Enterprise HDD quantity 4 Lot",
+      "expect": {
+        "lotSize": 4,
+        "capacityTb": 20,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Gold 12TB Enterprise HDD bundle of 2 SATA 7200RPM 3.5\"",
+      "expect": {
+        "lotSize": 2,
+        "capacityTb": 12,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba MG09 18TB SATA 3.5 inch Enterprise Hard Drive 7 drives tested",
+      "expect": {
+        "lotSize": 7,
+        "capacityTb": 18,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos 7E10 10TB SATA 3.5\" Enterprise HDD 20 units wholesale",
+      "expect": {
+        "lotSize": 20,
+        "capacityTb": 10,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 870 EVO 500GB 2.5 SATA SSD 25 pcs bulk lot Solid State",
+      "expect": {
+        "lotSize": 25,
+        "capacityTb": 0.5,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate IronWolf Pro 16TB NAS HDD 7200 RPM 256MB Cache SATA 6Gb/s 3.5\"",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Red Pro 8TB NAS Hard Drive 7200 RPM Class SATA 6 Gb/s 256 MB Cache 3.5",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X16 16TB 7200RPM 256MB Cache SATA 6Gb/s 3.5 Inch 16TB HDD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba N300 8TB 8 TB NAS Hard Drive 7200RPM 128MB SATA 6.0 Gb/s 3.5-inch",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 990 PRO 2TB 2 TB NVMe SSD M.2 2280 PCIe 4.0 Internal Gen 4",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate BarraCuda 2TB 7200 RPM 256MB Cache SATA 6.0Gb/s 3.5\" ST2000DM008",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "hdd_smr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Blue 1TB WD10EZEX 7200 RPM 64MB Cache SATA 6.0Gb/s 3.5 inch CMR",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Crucial MX500 500GB 3D NAND SATA 6Gb/s 2.5 inch 7mm SSD 560 MB/s Read",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 0.5,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X18 18TB SATA 6Gb/s 7200 RPM 3.5in Hyperscale 512e Fast Format",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 18,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "SATA Cable 6Gb/s 18 inch",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": null,
+        "technology": null,
+        "formFactor": null,
+        "interface": "sata3",
+        "publishable": false
+      }
+    },
+    {
+      "title": "Orico 3.5\" USB 3.0 Hard Drive Enclosure",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": null,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "usb_g1",
+        "publishable": false
+      }
+    },
+    {
+      "title": "Sabrent USB 3.0 to SATA External Hard Drive Docking Station for 2.5 3.5 HDD SSD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": null,
+        "technology": "ssd_tlc",
+        "formFactor": "ext_desktop",
+        "interface": "usb_g1",
+        "publishable": false
+      }
+    },
+    {
+      "title": "2.5 inch SATA Hard Drive Caddy Tray for Dell PowerEdge R720 R730 Server",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": null,
+        "technology": "hdd_cmr",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": false
+      }
+    },
+    {
+      "title": "M.2 NVMe SSD to PCIe 4.0 x4 Adapter Card with Heatsink for Desktop",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": null,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": false
+      }
+    },
+    {
+      "title": "StarTech 3.5 to 2.5 Hard Drive Mounting Bracket Adapter Kit with Screws",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": null,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": null,
+        "publishable": false
+      }
+    },
+    {
+      "title": "LSI 9300-8i 12Gb/s SAS HBA Controller Card IT Mode for ZFS TrueNAS",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": null,
+        "technology": null,
+        "formFactor": null,
+        "interface": "sas12",
+        "publishable": false
+      }
+    },
+    {
+      "title": "SanDisk Extreme PRO 1TB microSDXC UHS-I Memory Card for Steam Deck",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": null,
+        "formFactor": "ext_portable",
+        "interface": null,
+        "publishable": false
+      }
+    },
+    {
+      "title": "Samsung BAR Plus 256GB USB 3.1 Flash Drive Metal Thumb Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 0.256,
+        "technology": null,
+        "formFactor": null,
+        "interface": "usb_g1",
+        "publishable": false
+      }
+    },
+    {
+      "title": "HP LTO-8 Ultrium 30TB RW Data Tape Cartridge Q2078A",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 30,
+        "technology": null,
+        "formFactor": "3.5",
+        "interface": null,
+        "publishable": false
+      }
+    },
+    {
+      "title": "Corsair Vengeance 32GB DDR5 6000MHz DIMM Desktop Memory Kit",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": null,
+        "technology": null,
+        "formFactor": null,
+        "interface": null,
+        "publishable": false
+      }
+    },
+    {
+      "title": "Icy Dock 4 Bay 3.5 SATA Hard Drive Backplane Cage Enclosure for 5.25 Bay",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": null,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": false
+      }
+    },
+    {
+      "title": "Seagate Exos X16 16TB SAS 12Gb/s 3.5\" Enterprise HDD 24500 power on hours",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "HGST Ultrastar He10 10TB SAS 7200RPM 3.5 Enterprise Drive Tested Good",
+      "description": "Pulled from a decommissioned array. SMART shows power on hours: 41200 and no reallocated sectors. Sold as-is, no warranty. No returns.",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 10,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X14 14TB SATA 3.5 inch Enterprise Hard Drive Datacenter Pull",
+      "description": "POH: 33,450. 30 day money back returns accepted. Tested with badblocks, zero errors.",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 14,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba MG07ACA14TE 14TB SATA 7200RPM 3.5\" Enterprise HDD 18,900 hrs",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 14,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Ultrastar DC HC530 14TB SATA 3.5 Enterprise Hard Drive Recertified",
+      "description": "Manufacturer recertified with 2 year warranty. Returns accepted within 60 days.",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 14,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung PM983 3.84TB U.2 NVMe Enterprise SSD Used 8% wearout",
+      "description": "Power on hours 22150. 14 day returns. No warranty remaining.",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 3.84,
+        "technology": "ssd_tlc",
+        "formFactor": "u2",
+        "interface": "pcie3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X18 18TB SATA 3.5 Enterprise HDD 5 year warranty Sealed New",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 18,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Lot of 8 Seagate Exos X16 16TB SAS Enterprise HDD 3.5 inch",
+      "description": "All drives tested, power on hours range 28000-31000. Sold as-is no warranty, final sale.",
+      "expect": {
+        "lotSize": 8,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Red 8TB NAS Hard Drive 3.5 inch SATA 6Gb/s 5400RPM",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_smr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": false
+      }
+    },
+    {
+      "title": "WD Blue 4TB Desktop Hard Drive 3.5 inch SATA 6Gb/s 5400RPM",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "hdd_smr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": false
+      }
+    },
+    {
+      "title": "Toshiba P300 6TB Desktop Hard Drive 3.5 inch SATA 5400RPM",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 6,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": false
+      }
+    },
+    {
+      "title": "Crucial BX500 2TB 2.5 inch SATA III Internal SSD CT2000BX500SSD1",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": false
+      }
+    },
+    {
+      "title": "Kingston NV2 2TB M.2 2280 NVMe PCIe 4.0 Internal SSD SNV2S/2000G",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": false
+      }
+    },
+    {
+      "title": "Kingston A400 960GB 2.5 inch SATA III Internal SSD SA400S37/960G",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 0.96,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": false
+      }
+    },
+    {
+      "title": "Generic 4TB NVMe SSD M.2 High Speed Internal Solid State Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": false
+      }
+    },
+    {
+      "title": "8TB External Hard Drive USB 3.0 Portable Storage for PC Mac Xbox",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "ext_portable",
+        "interface": "usb_g1",
+        "publishable": false
+      }
+    },
+    {
+      "title": "Refurbished 4TB SATA Hard Drive 3.5 inch Desktop Computer Storage",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": false
+      }
+    },
+    {
+      "title": "Seagate 2TB Internal Hard Drive 3.5 inch SATA 7200 RPM Desktop",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": false
+      }
+    },
+    {
+      "title": "Seagate IronWolf Pro 24TB NAS Internal Hard Drive CMR 3.5 SATA 7200 RPM",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 24,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Red Plus 12TB NAS HDD WD120EFBX 3.5 SATA 7200RPM 256MB CMR",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 12,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X22 22TB SATA 6Gb/s 7200RPM 3.5 inch Enterprise Hard Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 22,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba MG10ACA20TE 20TB SATA 7200 RPM 3.5\" Enterprise Capacity HDD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 20,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Ultrastar DC HC570 22TB SATA 6Gb/s 3.5 inch 7200RPM Data Center HDD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 22,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate IronWolf 4TB NAS Hard Drive ST4000VN006 3.5 SATA 5400RPM CMR",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Gold 22TB Enterprise Class SATA HDD 7200 RPM 512MB Cache 3.5 inch",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 22,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate SkyHawk 8TB Surveillance Internal Hard Drive 3.5 SATA 7200RPM",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba MN09ACA18TE 18TB NAS Hard Drive SATA 7200RPM 3.5 inch CMR",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 18,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X20 18TB SAS 12Gb/s 3.5 inch 7200RPM Enterprise Hard Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 18,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 990 EVO 1TB NVMe M.2 2280 SSD PCIe 4.0 x4 5000MB/s Internal",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD_BLACK SN770 1TB NVMe M.2 2280 PCIe Gen4 Internal Gaming SSD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Crucial P5 Plus 2TB PCIe Gen4 NVMe M.2 2280 SSD 6600MB/s Internal",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate FireCuda 520 1TB NVMe M.2 2280 PCIe Gen4 SSD 5000MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Sabrent Rocket Q 4TB NVMe M.2 2280 PCIe Gen3 QLC Internal SSD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_qlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "KIOXIA BG5 512GB M.2 2230 NVMe PCIe Gen4 SSD Single Sided OEM",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 0.512,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2230",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "SK hynix BC711 512GB M.2 2280 NVMe PCIe Gen3 SSD Laptop Pull",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 0.512,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Corsair MP600 CORE XT 4TB M.2 2280 PCIe Gen4 NVMe SSD Internal",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "PNY CS3140 2TB M.2 2280 NVMe PCIe Gen4 x4 Internal SSD 7500MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "TEAMGROUP MP44L 2TB M.2 2280 PCIe Gen4 NVMe SSD Graphene Heatsink",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_qlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "ADATA Legend 960 4TB M.2 2280 PCIe Gen4 x4 NVMe SSD 7400MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Silicon Power UD90 4TB M.2 2280 PCIe Gen4 NVMe SSD 5000MB/s Internal",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Patriot Viper VP4300 2TB M.2 2280 PCIe Gen4 x4 NVMe SSD 7400MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "HP EX950 2TB M.2 2280 NVMe PCIe Gen3 x4 Internal SSD 3500MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Transcend MTE250S 2TB M.2 2280 PCIe Gen4 x4 NVMe SSD with Heatsink",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Inland Performance Plus 2TB M.2 2280 PCIe Gen4 NVMe SSD 7000MB/s",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Micron 7500 PRO 7.68TB U.3 NVMe PCIe Gen4 Data Center SSD 2.5 inch",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 7.68,
+        "technology": "ssd_tlc",
+        "formFactor": "u2",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung PM9A3 7.68TB U.2 NVMe PCIe Gen4 Enterprise SSD 1 DWPD Used",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 7.68,
+        "technology": "ssd_tlc",
+        "formFactor": "u2",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Intel P4610 3.2TB U.2 NVMe PCIe 3.0 x4 Enterprise SSD 2.5 inch",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 3.2,
+        "technology": "ssd_tlc",
+        "formFactor": "u2",
+        "interface": "pcie3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "KIOXIA CD6-R 15.36TB U.3 NVMe PCIe Gen4 Read Intensive Enterprise SSD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 15.36,
+        "technology": "ssd_tlc",
+        "formFactor": "u2",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Solidigm D5-P5336 61.44TB U.2 QLC NVMe PCIe Gen4 Enterprise SSD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": null,
+        "technology": "ssd_qlc",
+        "formFactor": "u2",
+        "interface": "pcie4",
+        "publishable": false
+      }
+    },
+    {
+      "title": "Seagate Nytro 1551 1.92TB SATA 6Gb/s 2.5 inch Enterprise SSD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1.92,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 870 EVO 2TB SATA III 2.5 Inch Internal Solid State Drive TLC",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 860 EVO 1TB 2.5 Inch SATA III Internal SSD MZ-76E1T0B/AM",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Crucial MX500 4TB 3D NAND SATA 2.5 inch Internal SSD 560MB/s Read",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Intel DC S3710 800GB SATA 6Gb/s 2.5 inch Enterprise SSD MLC High Endurance",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 0.8,
+        "technology": "ssd_mlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Micron 5300 PRO 7.68TB SATA 6Gb/s 2.5 inch Enterprise SSD Read Intensive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 7.68,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 870 QVO 4TB 2.5 SATA III Internal SSD QLC NAND MZ-77Q4T0BW",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_qlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Blue SA510 2TB SATA III 2.5 inch Internal SSD 560MB/s WDS200T3B0A",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Ultra Touch 2TB Portable External Hard Drive USB-C 3.0",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "hdd_cmr",
+        "formFactor": "ext_portable",
+        "interface": "usb_g1",
+        "publishable": false
+      }
+    },
+    {
+      "title": "Crucial X9 Pro 2TB Portable SSD USB 3.2 Gen 2 1050MB/s External",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "ext_portable",
+        "interface": "usb_g2",
+        "publishable": true
+      }
+    },
+    {
+      "title": "SK hynix Beetle X31 1TB Portable SSD USB 3.2 Gen 2 1050MB/s External",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "ext_portable",
+        "interface": "usb_g2",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Elements Portable 5TB External Hard Drive USB 3.0 WDBU6Y0050BBK",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 5,
+        "technology": "hdd_smr",
+        "formFactor": "ext_portable",
+        "interface": "usb_g1",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Backup Plus Slim 2TB Portable External Hard Drive USB 3.0",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "hdd_smr",
+        "formFactor": "ext_portable",
+        "interface": "usb_g1",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Lot of 4 WD Red Plus 6TB NAS Hard Drives 3.5 SATA CMR WD60EFPX Tested",
+      "expect": {
+        "lotSize": 4,
+        "capacityTb": 6,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Lot of 6 Samsung PM893 3.84TB SATA 2.5 Enterprise SSD Data Center Pulls",
+      "expect": {
+        "lotSize": 6,
+        "capacityTb": 3.84,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "10 x 14TB Seagate Exos X16 SAS 12Gb/s 3.5 Enterprise Hard Drives Tested",
+      "expect": {
+        "lotSize": 10,
+        "capacityTb": 14,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba MG08 16TB SATA 3.5 Enterprise HDD 12-pack Wholesale Bulk",
+      "expect": {
+        "lotSize": 12,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Ultrastar DC HC320 8TB SATA 3.5 Enterprise HDD qty 16 Server Pulls",
+      "expect": {
+        "lotSize": 16,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos 7E8 8TB SATA 3.5 inch Enterprise HDD 2 drives lot tested",
+      "expect": {
+        "lotSize": 2,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 990 PRO 1TB NVMe M.2 SSD 2 pack PCIe Gen4 Internal Bundle",
+      "expect": {
+        "lotSize": 2,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Crucial T500 1TB Gen4 NVMe M.2 SSD 3-pack Internal Solid State Drives",
+      "expect": {
+        "lotSize": 3,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "HGST Ultrastar 6TB SAS 7200RPM 3.5 Enterprise HDD bundle 5 units",
+      "expect": {
+        "lotSize": 5,
+        "capacityTb": 6,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate IronWolf Pro 18TB NAS HDD quantity: 4 SATA 7200RPM 3.5 inch",
+      "expect": {
+        "lotSize": 4,
+        "capacityTb": 18,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Gold 16TB Enterprise HDD 3 pcs SATA 7200RPM 3.5 inch Lot",
+      "expect": {
+        "lotSize": 3,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X18 16TB SATA 6Gb/s 7200RPM 3.5\" 256MB Cache 512e HDD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Red Plus 6TB NAS HDD 5400 RPM 128MB Cache SATA 6 Gb/s 3.5 Inch CMR",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 6,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba MG09 16TB SATA 6.0 Gb/s 7200 RPM 512MB Buffer 3.5-inch HDD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 980 PRO 2TB PCIe 4.0 x4 NVMe M.2 2280 SSD 7000 MB/s 1024MB DRAM",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate IronWolf 12TB NAS HDD 7200 RPM 256MB Cache SATA 6Gb/s CMR 3.5\"",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 12,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Ultrastar DC HC560 20TB SAS 12Gb/s 3.5 inch 7200RPM Enterprise HDD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 20,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X24 24TB SAS 12Gb/s 3.5\" 7200RPM Enterprise Hard Drive New",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 24,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba MG10ACA20TE 20TB SAS 12Gb/s 7200RPM 3.5 Enterprise Hard Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 20,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Red Pro 20TB NAS Hard Drive 3.5 inch SATA 7200 RPM 512MB Cache CMR",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 20,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate SkyHawk AI 20TB Surveillance HDD SATA 7200RPM 3.5 inch CMR",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 20,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "HGST Ultrastar He12 12TB SATA 6Gb/s 7200RPM 3.5 HUH721212ALE604 CMR",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 12,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X16 10TB SATA 6Gb/s 3.5 inch 7200RPM Enterprise HDD Refurb",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 10,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Purple 12TB Surveillance Hard Drive SATA 6Gb/s 3.5 inch 7200RPM",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 12,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba N300 16TB NAS Hard Drive SATA 6Gb/s 7200RPM 512MB 3.5 inch",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X18 14TB SAS 12Gb/s 3.5 7200RPM Enterprise HDD ST14000NM004J",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 14,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Gold 8TB Datacenter Hard Drive SATA 6Gb/s 7200RPM 256MB 3.5 inch",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 990 PRO with Heatsink 4TB PCIe 4.0 NVMe M.2 2280 SSD Internal",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Crucial P3 Plus 2TB M.2 2280 Gen4 NVMe Internal SSD 5000MB/s CT2000P3PSSD8",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_qlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD_BLACK SN850X 8TB NVMe M.2 2280 PCIe Gen4 Internal Gaming SSD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X16 16TB SATA 3.5 Enterprise Hard Drive 30 day returns",
+      "description": "Seller refurbished. Power on hours 45,000. No warranty.",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "HGST Ultrastar He8 8TB SAS 3.5 inch 7200RPM Enterprise HDD Datacenter Pull",
+      "description": "poh: 52000. Sold as is. All sales final.",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X20 20TB SATA 3.5 Enterprise HDD Manufacturer Recertified",
+      "description": "2 year warranty included. Returns accepted 30 days.",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 20,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Ultrastar DC HC550 18TB SATA Enterprise Hard Drive Used Server Pull",
+      "description": "Power-on hours: 26,800. 14-day returns. Out of warranty.",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 18,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba MG08ACA16TE 16TB SATA 3.5 Enterprise HDD 3 year warranty New Sealed",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung PM9A3 1.92TB U.2 NVMe Enterprise SSD 99% Life Remaining",
+      "description": "Power on hours 4,200. Returns accepted within 30 days. Manufacturer warranty until 2027.",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1.92,
+        "technology": "ssd_tlc",
+        "formFactor": "u2",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos 7E10 8TB SATA 3.5 Enterprise HDD Zero Bad Sectors Tested",
+      "description": "SMART attribute 9 reads 19400 hours. No returns, final sale, sold as-is.",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 8,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Micron 5400 MAX 1.92TB SATA 2.5 Enterprise SSD Mixed Use 3 DWPD Used",
+      "description": "Power on hours: 11,000. 30 day money back guarantee.",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1.92,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X22 22TB SAS 12Gb/s 3.5 Enterprise HDD New Open Box",
+      "description": "5 year manufacturer warranty. 60-day returns accepted.",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 22,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sas12",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Red Plus 10TB NAS Hard Drive WD101EFBX 3.5 SATA 7200RPM 256MB CMR",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 10,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate IronWolf Pro 10TB NAS Internal Hard Drive 7200 RPM SATA 3.5 inch",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 10,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Toshiba MN08ACA16T 16TB NAS Internal Hard Drive 7200RPM SATA 3.5 inch",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 16,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "WD Ultrastar DC HC580 24TB SATA 6Gb/s 3.5 inch 7200RPM Enterprise HDD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 24,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Seagate Exos X24 20TB SATA 6Gb/s 3.5 inch 7200RPM Enterprise Hard Drive",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 20,
+        "technology": "hdd_cmr",
+        "formFactor": "3.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung 870 EVO 1TB 2.5 SATA III SSD MZ-77E1T0BW Internal Solid State",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Crucial MX500 1TB SATA 2.5 inch 7mm Internal SSD CT1000MX500SSD1",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "2.5",
+        "interface": "sata3",
+        "publishable": true
+      }
+    },
+    {
+      "title": "SK hynix Platinum P41 1TB M.2 2280 NVMe PCIe Gen4 Internal SSD",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 1,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Kingston KC3000 4TB M.2 2280 PCIe 4.0 NVMe SSD 7000MB/s Internal",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 4,
+        "technology": "ssd_tlc",
+        "formFactor": "m2_2280",
+        "interface": "pcie4",
+        "publishable": true
+      }
+    },
+    {
+      "title": "Samsung T7 2TB Portable SSD USB 3.2 Gen 2 1050MB/s External Titan Grey",
+      "expect": {
+        "lotSize": 1,
+        "capacityTb": 2,
+        "technology": "ssd_tlc",
+        "formFactor": "ext_portable",
+        "interface": "usb_g2",
+        "publishable": true
+      }
+    }
+  ]
+}

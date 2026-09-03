@@ -231,7 +231,7 @@ waiting for it delays everything.
 
 1. Add the property in [Search Console](https://search.google.com/search-console),
    verify by DNS TXT.
-2. Submit `https://<domain>/sitemap.xml` — 47 URLs: the front page, 39 landings,
+2. Submit `https://<domain>/sitemap.xml` — 48 URLs: the front page, 39 landings,
    `/cheapest-per-tb`, the guides index, three guides and three legal pages.
 3. Confirm `/robots.txt` disallows `/api/`, `/admin/`, `/drive/` and `/*?`.
 4. Optional: add the domain to Plausible → `NEXT_PUBLIC_PLAUSIBLE_DOMAIN`. The

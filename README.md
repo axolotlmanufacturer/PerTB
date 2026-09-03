@@ -78,9 +78,19 @@ any API key exists.
 ```bash
 pnpm db:up        # Postgres 17 on :5432, matching DATABASE_URL in .env.example
 pnpm db:migrate   # apply migrations (creates one if the schema changed)
-pnpm ingest       # populate it — ~400 generated offers, no credentials needed
+pnpm seed         # populate it — ~400 generated offers, no credentials needed
 pnpm db:down
 ```
+
+`pnpm seed` is `pnpm ingest` against the mock adapters plus a back-dated price
+history, so the 90-day sparkline column has something to draw locally and in
+CI. It writes fabricated observations and therefore refuses to run against
+anything but a local database. Use `pnpm ingest` for a real sweep.
+
+Note that `pnpm test` **truncates the tables** when `DATABASE_URL` is set: the
+Amazon resilience tests need a real database and clear it between cases. Re-run
+`pnpm seed` afterwards. CI is unaffected — each job gets its own Postgres
+service.
 
 Production uses [Neon](https://neon.tech). Use the **pooled** connection string
 with the Neon serverless driver adapter — Prisma exhausts direct connections on
@@ -149,8 +159,8 @@ Phased, with a review checkpoint at the end of each phase.
 | 2     | Ingest — adapters, affiliate links, sweep              | **complete** |
 | 3     | The table — facets, duplicate collapse, dispersion     | **complete** |
 | 4     | SEO surface — ~40 curated landing routes               | **complete** |
-| 5     | Price history and shucking                             | next         |
-| 6     | Deal alerts                                            | planned      |
+| 5     | Price history and shucking                             | **complete** |
+| 6     | Deal alerts                                            | next         |
 | 7     | Editorial, admin and compliance                        | planned      |
 
 The launch checklist — credential acquisition order, DNS, Search Console and the
@@ -208,6 +218,35 @@ independent facet count maps. `AXES` carries all five so every enumeration gets
 the skip-your-own-axis treatment. How many appear as checkbox groups in the rail
 is a Phase 3 presentation decision.
 
+**The badge states the window it observed, not the window it searched.** The
+brief calls for a "cheapest in 90 days" badge. On a site three weeks old that
+sentence is false while its arithmetic is correct, which is the failure mode
+§1.1 exists to prevent — so the badge reads `65d low` on sixty-five days of
+data, and says nothing at all below seven days or where the price has never
+moved. Equal-lowest on a flat line is not a deal.
+
+**Price history is only as deep as a listing has been live.** `PricePoint`
+cascades from `Offer`, and the expiry pass hard-deletes offers, so when an eBay
+item sells its history goes with it. That is consistent — the history has no
+display surface once the offer is gone — but it does mean the 18-month
+retention job (5.5) only ever bites on listings that stayed live for a year and
+a half, which in practice is stable Amazon ASINs. Detaching history from the
+offer would need a schema-breaking migration, so it is a question rather than a
+change.
+
+**The drive detail view is `noindex, follow`.** Its URL is a database id and its
+content expires within hours. Indexing a few thousand of them would fill the
+index with soft-404s and dilute the curated routes Phase 4 exists to rank.
+
+**The shucking landing renders empty today, and this is a Phase 1 decision, not
+a Phase 5 bug.** See the next entry: all four shuckable external families assert
+their recording technology below the publish threshold, confidence is the
+minimum across axes, so every one of them quarantines and `/hdd/shuckable` has
+no rows. The 5.4 delta is fully implemented and unit-tested, including its
+markup (`test/unit/drive-table.test.tsx` renders the table directly, because the
+running app cannot currently produce a row that exercises it). **This needs a
+decision** — see "Open question" below.
+
 **Sub-threshold dictionary entries.** Twelve drive families whose recording
 technology or NAND type genuinely varies across capacities and production runs
 (WD Blue 3.5", WD Red non-Plus, Toshiba P300, Crucial BX500, the Kingston NV
@@ -216,6 +255,45 @@ the publish threshold. They quarantine unless the title states CMR/SMR outright
 or a specific model number resolves them. The brief's curated table lists WD
 Blue as SMR; that is true of some models and false of others, and publishing a
 guess is the failure mode the confidence rule exists to prevent.
+
+---
+
+## Open question: unknown axes versus quarantine
+
+Raised in Phase 5, not decided. CLAUDE.md §1 says to argue a non-negotiable
+rather than work around it, so nothing here has been changed.
+
+An unresolved axis currently contributes a confidence of **zero**, and
+confidence is the minimum across axes (§3.3), so a listing must resolve
+capacity, technology, form factor _and_ interface confidently or it does not
+appear at all. For most of the catalogue that is right and costs nothing: 19 of
+~420 generated listings quarantine.
+
+It is not right for external enclosures. The four shuckable families each carry
+a dictionary note saying, in effect, "the drive inside varies by production run,
+so the recording technology is not resolvable from the listing" — and then
+assert `hdd_cmr` anyway at 0.45–0.5, because asserting nothing scores worse than
+asserting a guess. Either way they quarantine, so `/hdd/shuckable` is empty, the
+shuckable badge never renders, and §3.8's "most-searched insight in the niche"
+has no surface.
+
+The argument for changing it: the harm §3.3 names is a listing "surfacing in an
+interface-filtered view" it does not belong in, and `passes()` already prevents
+that structurally — a row with `technology: null` can never satisfy a filter on
+technology. A WD Elements 20TB has a certain capacity, a certain form factor, a
+certain interface and a certain price; the only unknown is the drive inside, and
+"Technology: —" states that unknown honestly. Publishing it with an honest blank
+is not the same act as publishing a guess.
+
+The argument against: it is a change to a §1 non-negotiable, and the current
+rule has the virtue of being impossible to erode one axis at a time.
+
+A narrower option sits between them: distinguish _permanently_ unknowable axes
+(what is inside a sealed enclosure) from _currently_ unresolved ones (a WD Blue
+whose title omitted the model number). The first publishes with a blank; the
+second keeps quarantining until a model number appears. That is a principled
+line rather than a threshold nudge, but it is still a change to §3.3 and wants a
+human decision.
 
 ---
 

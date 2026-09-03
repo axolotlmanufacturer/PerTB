@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+coverage/
+test-results/
+playwright-report/
+pnpm-lock.yaml
+next-env.d.ts
+
+# CONTRACTUAL — see CLAUDE.md §1.6 and trap 12.
+# The affiliate link builders encode URL parameters agreed with Amazon
+# Associates and the eBay Partner Network. Parameter order and presence are
+# contractual; a reformat that reflows or reorders them can silently zero
+# revenue. Prettier does not touch this file. Neither does ESLint --fix.
+src/lib/affiliate.ts

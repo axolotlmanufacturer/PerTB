@@ -106,6 +106,7 @@ node-postgres for anything else, so the same code runs locally and on Vercel.
 | `pnpm seed`                         | Mock data into a local database                  |
 | `pnpm test:coverage`                | Unit tests + the coverage gate CI enforces       |
 | `pnpm test:e2e`                     | End-to-end tests (Playwright)                    |
+| `pnpm lighthouse`                   | Core Web Vitals budget CI enforces               |
 | `pnpm verify`                       | Typecheck + lint + unit + build, as CI runs them |
 
 Playwright needs its browser once: `pnpm exec playwright install chromium`.
@@ -147,8 +148,8 @@ Phased, with a review checkpoint at the end of each phase.
 | 1     | Domain core — taxonomy, normalisation, pricing, schema | **complete** |
 | 2     | Ingest — adapters, affiliate links, sweep              | **complete** |
 | 3     | The table — facets, duplicate collapse, dispersion     | **complete** |
-| 4     | SEO surface — ~40 curated landing routes               | next         |
-| 5     | Price history and shucking                             | planned      |
+| 4     | SEO surface — ~40 curated landing routes               | **complete** |
+| 5     | Price history and shucking                             | next         |
 | 6     | Deal alerts                                            | planned      |
 | 7     | Editorial, admin and compliance                        | planned      |
 
@@ -187,6 +188,11 @@ lowerCamelCase fields where PA-API used PascalCase. A request must name the
 `resources` it wants or the response carries neither titles nor offers. Two
 values remain unverifiable without credentials and are env-overridable:
 `AMAZON_CREDENTIAL_VERSION` and the optional `AMAZON_OAUTH_SCOPE`.
+
+**Affiliate links are built at render time, not at ingest.** The sub-id is the
+landing slug, so the same offer earns under a different sub-id depending on
+which route sent the visitor (ticket 4.6). A link baked into the database
+would collapse every route into one undifferentiated bucket.
 
 **Golden corpus provenance.** The brief asks for the corpus to be expanded from
 real Amazon and eBay listing titles. The titles in `test/fixtures/titles.json`

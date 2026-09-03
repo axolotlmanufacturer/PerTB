@@ -1,5 +1,7 @@
 import type { MetadataRoute } from 'next';
+import { GUIDES, guidePath } from '@/lib/guides';
 import { CHEAPEST_LANDING, LANDINGS, landingPath } from '@/lib/landings';
+import { LEGAL_PAGES, legalPath } from '@/lib/legal';
 import { SITE_URL } from '@/lib/site';
 
 /**
@@ -27,6 +29,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified,
       changeFrequency: 'daily' as const,
       priority: 0.8,
+    })),
+
+    // Editorial changes when someone edits it, not when a price moves, so it
+    // carries its own date rather than the crawl-time one.
+    { url: url('/guides'), lastModified, changeFrequency: 'monthly', priority: 0.6 },
+    ...GUIDES.map((guide) => ({
+      url: url(guidePath(guide)),
+      lastModified: new Date(guide.updated),
+      changeFrequency: 'monthly' as const,
+      priority: 0.7,
+    })),
+
+    ...LEGAL_PAGES.map((page) => ({
+      url: url(legalPath(page)),
+      lastModified: new Date(page.updated),
+      changeFrequency: 'yearly' as const,
+      priority: 0.2,
     })),
   ];
 }

@@ -23,6 +23,12 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           // JSON for the client island, and the authenticated trigger.
           '/api/',
+          // The review tool. It 401s anyway; an admin path in a search index
+          // is a problem regardless of what it returns.
+          '/admin/',
+          // Per-product history: a database id for a URL, content that expires
+          // within hours. Also noindex on the page itself.
+          '/drive/',
           // Every filter permutation. `/*?` matches any URL with a query string.
           '/*?',
         ],

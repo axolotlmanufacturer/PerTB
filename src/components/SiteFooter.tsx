@@ -5,6 +5,8 @@ import {
   landingsByCategory,
   type Landing,
 } from '@/lib/landings';
+import { GUIDES, guidePath } from '@/lib/guides';
+import { LEGAL_PAGES, legalPath } from '@/lib/legal';
 import { AMAZON_ASSOCIATES_DISCLOSURE, SITE_NAME } from '@/lib/site';
 
 /**
@@ -60,16 +62,32 @@ export function SiteFooter() {
             <li>
               <Link href={`/${CHEAPEST_LANDING.slug}`}>{CHEAPEST_LANDING.label}</Link>
             </li>
+            <li>
+              <Link href="/guides">Guides</Link>
+            </li>
+            {GUIDES.map((guide) => (
+              <li key={guide.slug}>
+                <Link href={guidePath(guide)}>{guide.title}</Link>
+              </li>
+            ))}
+            {LEGAL_PAGES.map((page) => (
+              <li key={page.slug}>
+                <Link href={legalPath(page)}>{page.title}</Link>
+              </li>
+            ))}
           </ul>
         </div>
       </nav>
 
       <p className="footer__disclosure">
-        {SITE_NAME} earns commission on purchases made through outbound links.{' '}
+        {SITE_NAME} earns commission on purchases made through outbound links, at no
+        additional cost to you.{' '}
         {/* Required verbatim by the Associates Operating Agreement. */}
-        {AMAZON_ASSOCIATES_DISCLOSURE} Prices come from marketplace APIs and are refreshed
-        at least every 24 hours; a listing we cannot refresh is removed rather than shown
-        stale. Always confirm the price on the retailer&rsquo;s site before buying.
+        {AMAZON_ASSOCIATES_DISCLOSURE} We also participate in the eBay Partner Network.
+        Prices come from marketplace APIs and are refreshed at least every 24 hours; a
+        listing we cannot refresh is removed rather than shown stale. Always confirm the
+        price on the retailer&rsquo;s site before buying.{' '}
+        <Link href="/legal/affiliate-disclosure">Full disclosure</Link>.
       </p>
     </footer>
   );

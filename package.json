@@ -52,13 +52,13 @@
     "vitest": "4.1.11"
   },
   "pnpm": {
-    "onlyBuiltDependencies": [
-      "@prisma/engines",
-      "prisma"
-    ],
     "ignoredBuiltDependencies": [
       "@sentry/cli",
       "unrs-resolver"
+    ],
+    "onlyBuiltDependencies": [
+      "@prisma/engines",
+      "prisma"
     ]
   }
 }

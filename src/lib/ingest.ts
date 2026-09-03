@@ -22,6 +22,8 @@ export interface IngestResult {
   pricePointsWritten: number;
   pricePointsTrimmed: number;
   quarantined: number;
+  /// Products whose axes a human has reviewed, so this sweep left them alone.
+  reviewedSkipped: number;
   rejected: number;
   expiredDeleted: number;
   /** Marketplaces that were skipped, and why. Never a failure. */
@@ -102,6 +104,7 @@ export async function runIngest(options: IngestOptions): Promise<IngestResult> {
     pricePointsWritten: 0,
     pricePointsTrimmed: 0,
     quarantined: 0,
+    reviewedSkipped: 0,
     rejected: 0,
     expiredDeleted: 0,
     skipped: [],
@@ -165,6 +168,26 @@ export async function runIngest(options: IngestOptions): Promise<IngestResult> {
 
       const { brand, model } = productIdentity(listing.title, n);
 
+      // A human review outranks the parser. Without this the correction made in
+      // /admin/quarantine would be silently undone by the next sweep, three
+      // hours later, and the reviewer would have no way to tell.
+      const existingProduct = await prisma.product.findUnique({
+        where: {
+          brand_model_capacityBytes: { brand, model, capacityBytes: n.capacityBytes },
+        },
+        select: { reviewedAt: true },
+      });
+      const reviewed = existingProduct?.reviewedAt != null;
+      if (reviewed) result.reviewedSkipped++;
+
+      const parsed = {
+        technology: n.technology,
+        formFactor: toPrismaFormFactor(n.formFactor),
+        interface: n.interface,
+        rpm: n.rpm,
+        confidence: n.confidence,
+      };
+
       const product = await prisma.product.upsert({
         where: {
           brand_model_capacityBytes: { brand, model, capacityBytes: n.capacityBytes },
@@ -173,22 +196,15 @@ export async function runIngest(options: IngestOptions): Promise<IngestResult> {
           brand,
           model,
           capacityBytes: n.capacityBytes,
-          technology: n.technology,
-          formFactor: toPrismaFormFactor(n.formFactor),
-          interface: n.interface,
-          rpm: n.rpm,
-          confidence: n.confidence,
+          ...parsed,
           shuckable: n.shuckable,
           shuckedEquivalent: n.shuckedEquivalent,
           dictionaryId: n.dictionaryId,
         },
         update: {
-          // Keep the most confident reading we have seen for this drive.
-          technology: n.technology,
-          formFactor: toPrismaFormFactor(n.formFactor),
-          interface: n.interface,
-          rpm: n.rpm,
-          confidence: n.confidence,
+          // The axis fields and the confidence are the reviewer's once they
+          // have reviewed. Everything else still refreshes.
+          ...(reviewed ? {} : parsed),
           shuckable: n.shuckable,
           shuckedEquivalent: n.shuckedEquivalent,
           dictionaryId: n.dictionaryId,
@@ -222,6 +238,7 @@ export async function runIngest(options: IngestOptions): Promise<IngestResult> {
           productId: product.id,
           marketplace: listing.marketplace,
           externalId: listing.externalId,
+          rawTitle: listing.title,
           condition: listing.condition,
           lotSize: n.lotSize,
           priceCents: listing.priceCents,
@@ -241,6 +258,7 @@ export async function runIngest(options: IngestOptions): Promise<IngestResult> {
         },
         update: {
           productId: product.id,
+          rawTitle: listing.title,
           condition: listing.condition,
           lotSize: n.lotSize,
           priceCents: listing.priceCents,

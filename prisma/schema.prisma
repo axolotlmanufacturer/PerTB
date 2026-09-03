@@ -93,6 +93,20 @@ model Product {
   /// Which spec-dictionary entry resolved this, for the quarantine review UI.
   dictionaryId String?
 
+  /// Set when a human has reviewed this product in /admin/quarantine (7.2).
+  /// Ingest then stops overwriting the axis fields and the confidence, because
+  /// a reviewer who read the actual listing knows more than the parser does —
+  /// otherwise the correction would be undone by the next sweep, three hours
+  /// later. A review is a verification, not a guess, so it is the one thing
+  /// allowed to raise confidence above what normalisation produced.
+  reviewedAt   DateTime?
+  reviewedNote String?
+
+  /// Rejected in review: not a drive, a mis-parse we cannot fix, an accessory
+  /// that slipped the filters. Never published, and never re-offered for
+  /// review, because the next sweep would otherwise resurrect it every time.
+  rejected Boolean @default(false)
+
   offers Offer[]
 
   createdAt DateTime @default(now())
@@ -102,6 +116,8 @@ model Product {
   @@index([technology, formFactor, interface])
   @@index([confidence])
   @@index([shuckable])
+  // The quarantine queue: sub-threshold, not yet rejected.
+  @@index([rejected, confidence])
 }
 
 // ---------------------------------------------------------------------------
@@ -118,6 +134,14 @@ model Offer {
 
   /// ASIN, or the eBay legacy item id.
   externalId String
+
+  /// The listing title exactly as the marketplace returned it.
+  ///
+  /// Kept solely so /admin/quarantine can show parsed-versus-raw (7.2). A
+  /// review UI that displays only what the parser produced cannot tell you
+  /// whether the parser was wrong. Nullable because rows written before this
+  /// column existed have none; the next sweep fills them in.
+  rawTitle String?
 
   condition Condition
 

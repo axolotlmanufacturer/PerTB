@@ -27,7 +27,7 @@ export async function loadDriveRows(
       expiresAt: { gt: now },
       // A listing whose specification we could not resolve confidently never
       // reaches a user. It is visible only in /admin/quarantine.
-      product: { confidence: { gte: CONFIDENCE_THRESHOLD } },
+      product: { confidence: { gte: CONFIDENCE_THRESHOLD }, rejected: false },
       // The detail view narrows to one drive. Everything else about the query
       // — both filters above included — stays identical, so a product page
       // cannot show a row the table would have withheld.
@@ -127,7 +127,7 @@ export async function loadPriceHistory(
       observedAt: { gte: since },
       offer: {
         expiresAt: { gt: now },
-        product: { confidence: { gte: CONFIDENCE_THRESHOLD } },
+        product: { confidence: { gte: CONFIDENCE_THRESHOLD }, rejected: false },
         ...(productId ? { productId } : {}),
       },
     },

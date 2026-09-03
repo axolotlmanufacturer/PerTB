@@ -566,8 +566,7 @@ const SELLERS: string[] = [
 
 /** Formats a capacity the way listings write it: "20TB", "7.68TB", "960GB". */
 function capacityToken(tb: number): string {
-  if (tb < 1) return `${Math.round(tb * 1000)}GB`;
-  return Number.isInteger(tb) ? `${tb}TB` : `${tb}TB`;
+  return tb < 1 ? `${Math.round(tb * 1000)}GB` : `${tb}TB`;
 }
 
 function pick<T>(rng: () => number, xs: readonly T[]): T {
@@ -581,10 +580,6 @@ const CONDITION_DISCOUNT: Record<Condition, number> = {
   renewed: 0.72,
   used: 0.55,
 };
-
-interface Generated {
-  listing: RawListing;
-}
 
 function generate(seed: number, count: number): RawListing[] {
   const rng = mulberry32(seed);
@@ -611,9 +606,13 @@ function generate(seed: number, count: number): RawListing[] {
           : 'new';
 
     // Real multi-drive lots, so the lot-detection path is genuinely exercised.
+    // Bare enterprise drives are what actually gets sold in lots; externals
+    // almost never are, which is why `kind` matters here.
     const lotRoll = rng();
     const lotSize =
-      family.enterprise && lotRoll < 0.22 ? pick(rng, [2, 3, 4, 5, 6, 8, 10, 12]) : 1;
+      family.enterprise && family.kind !== 'external' && lotRoll < 0.22
+        ? pick(rng, [2, 3, 4, 5, 6, 8, 10, 12])
+        : 1;
 
     // Jitter around a plausible per-TB baseline.
     const jitter = 0.82 + rng() * 0.42;
@@ -787,5 +786,3 @@ export function createMockAdapter(
     },
   };
 }
-
-export type { Generated };

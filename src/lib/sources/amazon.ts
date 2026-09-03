@@ -24,7 +24,26 @@ import {
  */
 
 const OAUTH_URL = 'https://api.amazon.com/auth/o2/token';
-const SEARCH_URL = 'https://api.amazon.com/creators/v1/items/search';
+
+/**
+ * The Creators API is a new ENDPOINT for the PA-API operations, not a
+ * differently-shaped API. One host serves every marketplace; the marketplace
+ * is routed by the `x-marketplace` header rather than a body field.
+ */
+const SEARCH_URL = 'https://creatorsapi.amazon/catalog/v1/searchItems';
+
+/**
+ * Request and response fields are lowerCamelCase, where PA-API 5.0 used
+ * PascalCase: `ItemInfo.Title.DisplayValue` became `itemInfo.title.displayValue`.
+ */
+const SEARCH_RESOURCES = [
+  'itemInfo.title',
+  'itemInfo.features',
+  'offersV2.listings.price',
+  'offersV2.listings.condition',
+  'offersV2.listings.availability',
+  'offersV2.listings.isBuyBoxWinner',
+] as const;
 
 /**
  * 24 hours is a HARD CEILING from the Associates Operating Agreement, which
@@ -66,7 +85,11 @@ function assertEligible(status: number, body: string): void {
   }
 }
 
-async function getAccessToken(clientId: string, clientSecret: string): Promise<string> {
+async function getAccessToken(
+  clientId: string,
+  clientSecret: string,
+  scope?: string,
+): Promise<string> {
   const now = Date.now();
   if (tokenCache && tokenCache.expiresAt > now + 60_000) return tokenCache.token;
 
@@ -77,7 +100,9 @@ async function getAccessToken(clientId: string, clientSecret: string): Promise<s
       grant_type: 'client_credentials',
       client_id: clientId,
       client_secret: clientSecret,
-      scope: 'creators::items:search',
+      // Overridable: Amazon does not publish the scope string outside
+      // Associates Central, and it differs by credential version.
+      ...(scope ? { scope } : {}),
     }),
   });
 
@@ -125,11 +150,21 @@ interface AmazonItem {
   };
 }
 
+interface AmazonSearchResponse {
+  searchResult?: { items?: AmazonItem[] };
+  /** Defensive fallback if the envelope ever flattens. */
+  items?: AmazonItem[];
+}
+
 export interface AmazonConfig {
   credentialId: string;
   credentialSecret: string;
   partnerTag: string;
   marketplace: string;
+  /** Sent in the Authorization header as `Bearer <token>, Version <this>`. */
+  credentialVersion: string;
+  /** Optional OAuth scope; omitted from the token request when unset. */
+  scope?: string;
 }
 
 export function readAmazonConfig(
@@ -145,6 +180,8 @@ export function readAmazonConfig(
     credentialSecret,
     partnerTag,
     marketplace: env.AMAZON_MARKETPLACE ?? 'www.amazon.com',
+    credentialVersion: env.AMAZON_CREDENTIAL_VERSION ?? '3.0',
+    ...(env.AMAZON_OAUTH_SCOPE ? { scope: env.AMAZON_OAUTH_SCOPE } : {}),
   };
 }
 
@@ -188,19 +225,30 @@ export function createAmazonAdapter(
     ttlHours: TTL_HOURS,
 
     async search(keyword: string): Promise<RawListing[]> {
-      const token = await getAccessToken(config.credentialId, config.credentialSecret);
+      const token = await getAccessToken(
+        config.credentialId,
+        config.credentialSecret,
+        config.scope,
+      );
 
-      const url = new URL(SEARCH_URL);
-      url.searchParams.set('keywords', keyword);
-      url.searchParams.set('partnerTag', config.partnerTag);
-      url.searchParams.set('marketplace', config.marketplace);
-      url.searchParams.set('itemCount', '50');
-
-      const res = await fetch(url, {
+      const res = await fetch(SEARCH_URL, {
+        method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
+          // The credential version is part of the header value, not a
+          // separate field.
+          Authorization: `Bearer ${token}, Version ${config.credentialVersion}`,
+          'x-marketplace': config.marketplace,
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          keywords: keyword,
+          partnerTag: config.partnerTag,
+          partnerType: 'Associates',
+          // Without `resources` the response carries neither titles nor
+          // offers, and every item would be dropped by the mapper.
+          resources: SEARCH_RESOURCES,
+          itemCount: 10,
+        }),
       });
 
       await sleep(RATE_LIMIT_DELAY_MS);
@@ -211,8 +259,12 @@ export function createAmazonAdapter(
         throw new Error(`Amazon search failed: ${res.status} ${body}`);
       }
 
-      const json = (await res.json()) as { items?: AmazonItem[] };
-      return (json.items ?? [])
+      const json = (await res.json()) as AmazonSearchResponse;
+      // `searchResult.items` is the documented shape; the bare `items`
+      // fallback costs nothing and avoids a silent empty sweep if it moves.
+      const items = json.searchResult?.items ?? json.items ?? [];
+
+      return items
         .map((item) => mapItem(item, config.marketplace))
         .filter((l): l is RawListing => l !== null);
     },

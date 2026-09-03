@@ -1,0 +1,32 @@
+# Local development database only.
+#
+# Production is Neon (brief §3). Neon's pooled connection string plus the Neon
+# serverless driver adapter is what keeps Prisma from exhausting connections on
+# serverless (known trap 3) — this container is the local stand-in and is not
+# a model of the deploy topology.
+#
+#   pnpm db:up     start
+#   pnpm db:down   stop and remove
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: perterabyte-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: perterabyte
+      POSTGRES_PASSWORD: perterabyte
+      POSTGRES_DB: perterabyte
+    ports:
+      # Matches DATABASE_URL in .env.example.
+      - '5432:5432'
+    volumes:
+      - perterabyte-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U perterabyte -d perterabyte']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  perterabyte-pgdata:

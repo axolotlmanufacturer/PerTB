@@ -31,10 +31,13 @@ export function FacetRail({
   query,
   counts,
   activeCount,
+  action = '/',
 }: {
   query: Query;
   counts: FacetCounts;
   activeCount: number;
+  /** Where the form submits. A landing filters within itself, not back to /. */
+  action?: string;
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -54,7 +57,7 @@ export function FacetRail({
     }
     const qs = params.toString();
     startTransition(() => {
-      router.push(qs ? `/?${qs}` : '/');
+      router.push(qs ? `${action}?${qs}` : action);
     });
   }
 
@@ -62,7 +65,7 @@ export function FacetRail({
     <form
       ref={formRef}
       method="GET"
-      action="/"
+      action={action}
       onChange={submitNow}
       style={{ fontSize: '13px' }}
       aria-busy={pending}
@@ -72,7 +75,7 @@ export function FacetRail({
         {activeCount > 0 && (
           // Renders a real <a href="/">, so reset works with JavaScript off
           // and does a client transition when it is on.
-          <Link href="/" style={{ fontSize: '12px' }} data-testid="reset-filters">
+          <Link href={action} style={{ fontSize: '12px' }} data-testid="reset-filters">
             reset ({activeCount})
           </Link>
         )}

@@ -78,6 +78,7 @@ any API key exists.
 ```bash
 pnpm db:up        # Postgres 17 on :5432, matching DATABASE_URL in .env.example
 pnpm db:migrate   # apply migrations (creates one if the schema changed)
+pnpm ingest       # populate it — ~400 generated offers, no credentials needed
 pnpm db:down
 ```
 
@@ -86,8 +87,9 @@ with the Neon serverless driver adapter — Prisma exhausts direct connections o
 serverless.
 
 Prisma 7 reads the datasource URL from `prisma.config.ts`, not from
-`schema.prisma`. At runtime the client takes an adapter rather than a URL; that
-wiring lands with `src/lib/db.ts` in Phase 2.
+`schema.prisma`. At runtime the client takes a driver adapter rather than a URL:
+`src/lib/db.ts` picks the Neon serverless adapter for a Neon host and
+node-postgres for anything else, so the same code runs locally and on Vercel.
 
 ### Everything else
 
@@ -100,6 +102,8 @@ wiring lands with `src/lib/db.ts` in Phase 2.
 | `pnpm lint`                         | ESLint                                           |
 | `pnpm format` / `pnpm format:check` | Prettier                                         |
 | `pnpm test`                         | Unit tests (Vitest)                              |
+| `pnpm ingest`                       | One sweep: fetch, normalise, upsert, expire      |
+| `pnpm seed`                         | Mock data into a local database                  |
 | `pnpm test:coverage`                | Unit tests + the coverage gate CI enforces       |
 | `pnpm test:e2e`                     | End-to-end tests (Playwright)                    |
 | `pnpm verify`                       | Typecheck + lint + unit + build, as CI runs them |
@@ -120,8 +124,16 @@ JavaScript disabled — the entire business model is organic search for long-tai
 comparison queries, so Googlebot's first paint cannot be an empty table.
 
 Ingest runs in **GitHub Actions on a 3-hourly cron**, not Vercel Cron, which
-caps at 300 seconds — less than a full two-marketplace sweep. The Vercel route
-is a manual trigger only.
+caps at 300 seconds — less than a full two-marketplace sweep. `/api/cron/refresh`
+is a bearer-gated manual trigger and the cache-revalidation hook the Action calls
+on completion; it does not run the sweep.
+
+Offers carry an expiry — 6 hours for eBay, a 24-hour hard ceiling for Amazon —
+and the ingest job **hard-deletes** anything past it. Every read path filters on
+`expiresAt > now()`. If ingest stops running, the table empties. That is the
+intended behaviour, not a bug: displaying a price we can no longer refresh
+breaches the Associates Operating Agreement, and a stale number is exactly the
+kind of wrong number this site cannot afford.
 
 ---
 
@@ -133,8 +145,8 @@ Phased, with a review checkpoint at the end of each phase.
 | ----- | ------------------------------------------------------ | ------------ |
 | 0     | Repository and guardrails                              | **complete** |
 | 1     | Domain core — taxonomy, normalisation, pricing, schema | **complete** |
-| 2     | Ingest — adapters, affiliate links, sweep              | next         |
-| 3     | The table — facets, duplicate collapse, dispersion     | planned      |
+| 2     | Ingest — adapters, affiliate links, sweep              | **complete** |
+| 3     | The table — facets, duplicate collapse, dispersion     | next         |
 | 4     | SEO surface — ~40 curated landing routes               | planned      |
 | 5     | Price history and shucking                             | planned      |
 | 6     | Deal alerts                                            | planned      |

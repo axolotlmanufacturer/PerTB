@@ -26,12 +26,18 @@
     "db:deploy": "prisma migrate deploy",
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
-    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build"
+    "verify": "pnpm typecheck && pnpm lint && pnpm test && pnpm build",
+    "ingest": "tsx scripts/ingest.ts",
+    "seed": "tsx scripts/seed.ts"
   },
   "dependencies": {
+    "@neondatabase/serverless": "1.1.0",
+    "@prisma/adapter-neon": "7.10.0",
+    "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
     "@sentry/nextjs": "10.73.0",
     "next": "15.5.25",
+    "pg": "8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zod": "4.5.4"
@@ -40,6 +46,7 @@
     "@eslint/eslintrc": "3.3.1",
     "@playwright/test": "1.62.1",
     "@types/node": "22.19.2",
+    "@types/pg": "8.23.1",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.6",
     "@vitest/coverage-v8": "4.1.11",
@@ -48,6 +55,7 @@
     "eslint-config-prettier": "10.1.8",
     "prettier": "3.9.6",
     "prisma": "7.10.0",
+    "tsx": "4.23.13",
     "typescript": "5.9.3",
     "vitest": "4.1.11"
   },
@@ -58,7 +66,8 @@
     ],
     "onlyBuiltDependencies": [
       "@prisma/engines",
-      "prisma"
+      "prisma",
+      "esbuild"
     ]
   }
 }

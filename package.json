@@ -33,7 +33,10 @@
     "lighthouse": "lhci autorun"
   },
   "dependencies": {
+    "@mdx-js/loader": "3.1.1",
+    "@mdx-js/react": "3.1.1",
     "@neondatabase/serverless": "1.1.0",
+    "@next/mdx": "15.5.25",
     "@prisma/adapter-neon": "7.10.0",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
@@ -42,12 +45,14 @@
     "pg": "8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "remark-gfm": "4.0.1",
     "zod": "4.5.4"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.1",
     "@lhci/cli": "0.15.1",
     "@playwright/test": "1.62.1",
+    "@types/mdx": "2.0.14",
     "@types/node": "22.19.2",
     "@types/pg": "8.23.1",
     "@types/react": "19.2.14",

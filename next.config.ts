@@ -1,7 +1,13 @@
+import createMDX from '@next/mdx';
 import type { NextConfig } from 'next';
+import remarkGfm from 'remark-gfm';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+
+  // Guides are .mdx files compiled at build time (ticket 7.1). They render as
+  // Server Components, so the pipeline costs nothing in the client bundle.
+  pageExtensions: ['ts', 'tsx', 'mdx'],
 
   // No images anywhere on this site (brief §3, "Images: None"). Amazon requires
   // product images be served from their CDN, and they add a compliance surface
@@ -24,4 +30,12 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * GFM for tables — the CMR/SMR guide is largely a table of drive families, and
+ * plain CommonMark has no table syntax.
+ */
+const withMDX = createMDX({
+  options: { remarkPlugins: [remarkGfm], rehypePlugins: [] },
+});
+
+export default withMDX(nextConfig);

@@ -1,0 +1,82 @@
+Two hard drives can be identical on every line of the spec sheet — same
+capacity, same 3.5-inch body, same SATA interface, same 5400 RPM — and behave
+completely differently inside an array. The difference is how the tracks are
+written, and it is the specification manufacturers are least willing to print
+on the box.
+
+## What shingling actually does
+
+A conventional drive (**CMR**, conventional magnetic recording) writes each
+track in its own lane. The write head is wider than the read head, so the lanes
+must be spaced for the write head, and some platter area goes unused.
+
+A shingled drive (**SMR**) overlaps the tracks like roof tiles. The read head
+is narrow enough to still pick out each track, so density goes up perhaps 20%
+for free.
+
+The cost arrives on writes. Overwriting a shingled track corrupts the tracks
+overlapping it, so the drive cannot do it in place: it must read the whole band,
+modify, and rewrite it. Drive-managed SMR hides this behind a CMR-mode cache
+region and reshuffles later, during idle time.
+
+Sequential writes are fine. Sustained random writes exhaust the cache, and when
+they do, throughput does not degrade gracefully — it falls off a cliff, from
+roughly 150 MB/s to single-digit megabytes per second, and stays there.
+
+## Why an array is the worst case
+
+A RAID rebuild is precisely the workload SMR handles worst: hours of sustained
+writes to every sector of the replacement drive, with no idle time to reorganise
+in.
+
+Three things follow.
+
+1. **Rebuilds take days rather than hours.** A 12TB shingled drive can take
+   over a week where its CMR equivalent takes about a day.
+2. **Some controllers give up.** If writes stall long enough, the controller can
+   decide the drive has failed and drop it mid-resilver. On a single-parity
+   array that turns a degraded array into a lost one.
+3. **The window of exposure is the rebuild.** Every hour a rebuild runs is an
+   hour a second failure destroys the array. Multiplying that window by ten is
+   the entire risk.
+
+ZFS resilvering is not exempt; neither is Synology SHR, unRAID parity, or a
+Btrfs balance. Anything that writes an entire disk is the bad case.
+
+## How to tell which one you are buying
+
+Rarely from the title. The specification is usually stated only in a datasheet
+footnote, and drive-managed SMR is by design invisible to the host.
+
+That is why this site resolves recording technology from a **curated family
+table** rather than from the listing, and why a drive it cannot resolve is
+withheld rather than guessed at.
+
+| Usually CMR                       | Usually SMR                                      |
+| --------------------------------- | ------------------------------------------------ |
+| Seagate IronWolf and IronWolf Pro | Seagate BarraCuda (non-Pro), 2.5-inch especially |
+| Seagate Exos, Constellation       | WD Blue in several capacities                    |
+| WD Red Plus and Red Pro           | WD My Passport, most 2.5-inch portables          |
+| WD Gold, HGST/WD Ultrastar        | Seagate Archive HDD                              |
+| Toshiba MG and MN series          | Toshiba P300 in some capacities                  |
+| Seagate SkyHawk, WD Purple Pro    | Many low-cost desktop drives, unlabelled         |
+
+Two warnings about that table. **WD Red without "Plus" or "Pro"** is the one
+that caught everyone — WD shipped SMR under the NAS brand in 2020 without
+saying so, which is where the current level of suspicion comes from. And within
+a family the answer can vary by capacity and production run, which is why the
+model number matters more than the family name: `WD80EFAX` and `WD80EFBX` are
+not the same drive.
+
+## When SMR is genuinely fine
+
+The failure mode is sustained random writes. Where writes are sequential and
+bulk, and reads are rare, shingling costs you nothing and the density discount
+is real:
+
+- Cold backup and archive targets.
+- Write-once media libraries.
+- A single external drive you fill and shelve.
+
+For those, [SMR drives](/hdd/smr) are the cheaper honest choice. For anything
+with parity, buy [CMR](/hdd/cmr).

@@ -3,99 +3,61 @@ import {
   MIN_BADGE_DAYS,
   buildGroupHistory,
   daysBetween,
+  historyKey,
   sparklinePath,
-  type HistoryIndex,
   type PriceObservation,
 } from '@/lib/history';
-import type { DriveRow } from '@/lib/table';
 
 const DAY = 24 * 60 * 60 * 1000;
 const NOW = Date.UTC(2026, 0, 31, 12, 0, 0);
+const TB = 10n ** 12n;
 
 function daysAgo(n: number): number {
   return NOW - n * DAY;
 }
 
-let seq = 0;
-function row(overrides: Partial<DriveRow> = {}): DriveRow {
-  seq++;
-  return {
-    offerId: `o${seq}`,
-    productId: 'p1',
-    brand: 'Seagate',
-    model: 'Exos X18',
-    capacityBytes: 16n * 10n ** 12n,
-    technology: 'hdd_cmr',
-    formFactor: '3.5',
-    interface: 'sata3',
-    rpm: 7200,
-    shuckable: false,
-    shuckedEquivalent: null,
-    marketplace: 'ebay',
-    externalId: `e${seq}`,
-    condition: 'used',
-    lotSize: 1,
-    priceCents: 16_000,
-    shippingCents: 0,
-    shippingIsCalculated: false,
-    inStock: true,
-    sellerName: null,
-    sellerScore: null,
-    powerOnHours: null,
-    hasWarranty: null,
-    returnPolicy: null,
-    url: 'https://www.ebay.com/itm/1',
-    ...overrides,
-  };
+/**
+ * Observations for one offer.
+ *
+ * `[daysAgo, priceCents, shippingCents?]`, plus the lot size the observation
+ * was taken at — which lives on the PricePoint now, not on the offer, because
+ * the offer may be gone by the time this is read.
+ */
+function obs(
+  offerKey: string,
+  points: [days: number, priceCents: number, shippingCents?: number][],
+  lotSize = 1,
+): PriceObservation[] {
+  return points.map(([days, priceCents, shippingCents = 0]) => ({
+    at: daysAgo(days),
+    offerKey,
+    lotSize,
+    priceCents,
+    shippingCents,
+  }));
 }
 
-function index(
-  entries: Record<string, [days: number, priceCents: number, shippingCents?: number][]>,
-): HistoryIndex {
-  const map = new Map<string, PriceObservation[]>();
-  for (const [offerId, points] of Object.entries(entries)) {
-    map.set(
-      offerId,
-      points.map(([days, priceCents, shippingCents = 0]): PriceObservation => ({
-        at: daysAgo(days),
-        priceCents,
-        shippingCents,
-      })),
-    );
-  }
-  return map;
-}
+const TEN_TB = 10n * TB;
 
 describe('buildGroupHistory', () => {
   it('is null when nothing was observed', () => {
-    const a = row();
-    expect(buildGroupHistory([a], new Map(), true, NOW)).toBeNull();
+    expect(buildGroupHistory(TEN_TB, [], true, NOW)).toBeNull();
   });
 
   it('is null on a single observation rather than drawing a flat line', () => {
     // One point plus "now" would render as a straight line across ninety days.
     // For a listing first seen this morning that is a confident false claim.
-    const a = row();
-    const history = buildGroupHistory(
-      [a],
-      index({ [a.offerId]: [[0, 16_000]] }),
-      true,
-      NOW,
-    );
-    expect(history).toBeNull();
+    expect(buildGroupHistory(TEN_TB, obs('a', [[0, 16_000]]), true, NOW)).toBeNull();
   });
 
   it('expresses the series in $/TB, not in dollars', () => {
-    // $160 on a 16TB drive is $10/TB = 1000 cents/TB.
-    const a = row({ capacityBytes: 16n * 10n ** 12n });
+    // $320 then $160 on a 16TB drive is $20/TB then $10/TB.
     const history = buildGroupHistory(
-      [a],
-      index({
-        [a.offerId]: [
-          [30, 32_000],
-          [0, 16_000],
-        ],
-      }),
+      16n * TB,
+      obs('a', [
+        [30, 32_000],
+        [0, 16_000],
+      ]),
       true,
       NOW,
     );
@@ -103,17 +65,20 @@ describe('buildGroupHistory', () => {
     expect(history?.lowPptCents).toBeCloseTo(1000, 6);
   });
 
-  it('divides a lot by its drive count, like the table does', () => {
-    const a = row({ lotSize: 4, capacityBytes: 4n * 10n ** 12n });
-    // $160 across 4 x 4TB = 16TB = $10/TB.
+  it('divides by the lot size the observation was TAKEN at', () => {
+    // $160 across 4 x 4TB = 16TB = $10/TB. The lot size rides on the point, so
+    // a listing later re-read as a single drive does not retroactively rewrite
+    // three months of history that were genuinely observed as a lot of four.
     const history = buildGroupHistory(
-      [a],
-      index({
-        [a.offerId]: [
+      4n * TB,
+      obs(
+        'a',
+        [
           [30, 32_000],
           [0, 16_000],
         ],
-      }),
+        4,
+      ),
       true,
       NOW,
     );
@@ -121,76 +86,82 @@ describe('buildGroupHistory', () => {
   });
 
   it('honours the shipping toggle', () => {
-    const a = row({ capacityBytes: 10n * 10n ** 12n });
-    const points = index({
-      [a.offerId]: [
-        [30, 10_000, 2_000],
-        [0, 9_000, 2_000],
-      ],
-    });
+    const points = obs('a', [
+      [30, 10_000, 2_000],
+      [0, 9_000, 2_000],
+    ]);
 
-    const withShipping = buildGroupHistory([a], points, true, NOW);
-    const without = buildGroupHistory([a], points, false, NOW);
-
-    expect(withShipping?.lowPptCents).toBeCloseTo(1100, 6);
-    expect(without?.lowPptCents).toBeCloseTo(900, 6);
+    expect(buildGroupHistory(TEN_TB, points, true, NOW)?.lowPptCents).toBeCloseTo(
+      1100,
+      6,
+    );
+    expect(buildGroupHistory(TEN_TB, points, false, NOW)?.lowPptCents).toBeCloseTo(
+      900,
+      6,
+    );
   });
 
   it('tracks the cheapest offer in the group, stepping between sellers', () => {
     // Two sellers. B undercuts A twenty days ago, so the group's price should
     // follow B from that point even though A never changed its own price.
-    const a = row({ offerId: 'a', capacityBytes: 10n * 10n ** 12n });
-    const b = row({ offerId: 'b', capacityBytes: 10n * 10n ** 12n });
-
     const history = buildGroupHistory(
-      [a, b],
-      index({
-        a: [[40, 10_000]],
-        b: [[20, 8_000]],
-      }),
+      TEN_TB,
+      [...obs('a', [[40, 10_000]]), ...obs('b', [[20, 8_000]])],
       true,
       NOW,
     );
 
     expect(history).not.toBeNull();
-    // Before B existed the group was A's price; after, it is B's.
     expect(history?.highPptCents).toBeCloseTo(1000, 6);
     expect(history?.lowPptCents).toBeCloseTo(800, 6);
     expect(history?.series.at(-1)?.pptCents).toBeCloseTo(800, 6);
   });
 
   it('does not let an offer that did not exist yet drag the line down', () => {
-    // B is cheaper, but only appeared 5 days ago. The series 40 days back must
-    // be A's price, not B's.
-    const a = row({ offerId: 'a', capacityBytes: 10n * 10n ** 12n });
-    const b = row({ offerId: 'b', capacityBytes: 10n * 10n ** 12n });
-
     const history = buildGroupHistory(
-      [a, b],
-      index({
-        a: [
+      TEN_TB,
+      [
+        ...obs('a', [
           [40, 10_000],
           [30, 10_500],
-        ],
-        b: [[5, 4_000]],
-      }),
+        ]),
+        ...obs('b', [[5, 4_000]]),
+      ],
+      true,
+      NOW,
+    );
+    expect(history?.series[0]?.pptCents).toBeCloseTo(1000, 6);
+  });
+
+  it('keeps the history of an offer that has since been deleted', () => {
+    // The whole point of hanging PricePoint off the Product. Offer "sold" ended
+    // twenty days ago and its row is gone; its prices were still real while it
+    // was live, and dropping them would rewrite the past every time a listing
+    // ends. Only "live" still exists, and it is the dearer of the two.
+    const history = buildGroupHistory(
+      TEN_TB,
+      [
+        ...obs('sold', [
+          [60, 9_000],
+          [40, 7_000],
+        ]),
+        ...obs('live', [[50, 12_000]]),
+      ],
       true,
       NOW,
     );
 
-    expect(history?.series[0]?.pptCents).toBeCloseTo(1000, 6);
+    expect(history?.lowPptCents).toBeCloseTo(700, 6);
+    expect(history?.depthDays).toBe(60);
   });
 
   it('carries the last known price forward to now', () => {
-    const a = row({ capacityBytes: 10n * 10n ** 12n });
     const history = buildGroupHistory(
-      [a],
-      index({
-        [a.offerId]: [
-          [40, 10_000],
-          [30, 9_000],
-        ],
-      }),
+      TEN_TB,
+      obs('a', [
+        [40, 10_000],
+        [30, 9_000],
+      ]),
       true,
       NOW,
     );
@@ -200,18 +171,14 @@ describe('buildGroupHistory', () => {
 });
 
 describe('the cheapest-in-N-days badge', () => {
-  const a = row({ offerId: 'badge', capacityBytes: 10n * 10n ** 12n });
-
   it('states the window it actually observed, not the window it looked in', () => {
     // 40 days of data must not produce a "cheapest in 90 days" claim.
     const history = buildGroupHistory(
-      [a],
-      index({
-        badge: [
-          [40, 12_000],
-          [10, 9_000],
-        ],
-      }),
+      TEN_TB,
+      obs('badge', [
+        [40, 12_000],
+        [10, 9_000],
+      ]),
       true,
       NOW,
     );
@@ -221,13 +188,11 @@ describe('the cheapest-in-N-days badge', () => {
 
   it('says nothing at all below the minimum depth', () => {
     const history = buildGroupHistory(
-      [a],
-      index({
-        badge: [
-          [MIN_BADGE_DAYS - 1, 12_000],
-          [0, 9_000],
-        ],
-      }),
+      TEN_TB,
+      obs('badge', [
+        [MIN_BADGE_DAYS - 1, 12_000],
+        [0, 9_000],
+      ]),
       true,
       NOW,
     );
@@ -239,13 +204,11 @@ describe('the cheapest-in-N-days badge', () => {
     // Equal-lowest is technically true and useless. A price that has not moved
     // is not a deal, however low it is.
     const history = buildGroupHistory(
-      [a],
-      index({
-        badge: [
-          [40, 10_000],
-          [20, 10_000],
-        ],
-      }),
+      TEN_TB,
+      obs('badge', [
+        [40, 10_000],
+        [20, 10_000],
+      ]),
       true,
       NOW,
     );
@@ -254,13 +217,11 @@ describe('the cheapest-in-N-days badge', () => {
 
   it('withholds the badge when the current price is not the low', () => {
     const history = buildGroupHistory(
-      [a],
-      index({
-        badge: [
-          [40, 9_000],
-          [10, 12_000],
-        ],
-      }),
+      TEN_TB,
+      obs('badge', [
+        [40, 9_000],
+        [10, 12_000],
+      ]),
       true,
       NOW,
     );
@@ -269,19 +230,26 @@ describe('the cheapest-in-N-days badge', () => {
 
   it('awards it when the current price is the low of a window that moved', () => {
     const history = buildGroupHistory(
-      [a],
-      index({
-        badge: [
-          [60, 14_000],
-          [30, 12_000],
-          [2, 9_000],
-        ],
-      }),
+      TEN_TB,
+      obs('badge', [
+        [60, 14_000],
+        [30, 12_000],
+        [2, 9_000],
+      ]),
       true,
       NOW,
     );
     expect(history?.cheapestInDays).toBe(60);
     expect(history?.highPptCents).toBeCloseTo(1400, 6);
+  });
+});
+
+describe('historyKey', () => {
+  it('groups by product AND condition, never across them', () => {
+    // New and used of the same drive are different products to a buyer, so
+    // they are different series (CLAUDE.md §3.6).
+    expect(historyKey('p1', 'new')).not.toBe(historyKey('p1', 'used'));
+    expect(historyKey('p1', 'used')).toBe('p1|used');
   });
 });
 

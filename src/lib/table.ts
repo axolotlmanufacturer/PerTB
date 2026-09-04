@@ -1,6 +1,11 @@
-import { buildGroupHistory, type GroupHistory, type HistoryIndex } from './history';
+import {
+  buildGroupHistory,
+  historyKey,
+  type GroupHistory,
+  type HistoryIndex,
+} from './history';
 import { pricePerTbCents } from './pricing';
-import type { Query } from './query';
+import { PAGE_SIZE, type Query } from './query';
 import {
   AXES,
   type Axis,
@@ -162,7 +167,12 @@ export interface DispersionTick {
 }
 
 export interface TableView {
+  /** The page of groups being rendered, not the whole result. */
   groups: OfferGroup[];
+  /** Every group the query matched, across all pages. */
+  totalGroups: number;
+  page: number;
+  pageCount: number;
   /** Offers that passed every filter. */
   matchedOffers: number;
   /** Live offers before filtering, for the dispersion strip and the counts. */
@@ -239,8 +249,8 @@ export function buildTable(
       offers,
       history: history
         ? buildGroupHistory(
-            offers.map((o) => o.row),
-            history,
+            best.row.capacityBytes,
+            history.get(historyKey(best.row.productId, best.row.condition)) ?? [],
             query.includeShipping,
             now,
           )
@@ -251,13 +261,25 @@ export function buildTable(
 
   groups.sort(SORTERS[query.sort]);
 
+  // The floor is the floor of the whole SELECTION, not of the page. "Cheapest
+  // $4.58/TB" must not change when you turn to page two.
   const floorPptCents = groups.reduce<number | null>(
     (min, g) => (min === null || g.cheapestPptCents < min ? g.cheapestPptCents : min),
     null,
   );
 
+  const totalGroups = groups.length;
+  const pageCount = Math.max(1, Math.ceil(totalGroups / PAGE_SIZE));
+  // A page past the end renders empty rather than erroring — and the pager
+  // still links back, so it is a dead end and not a trap.
+  const page = Math.min(query.page, pageCount);
+  const paged = groups.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return {
-    groups,
+    groups: paged,
+    totalGroups,
+    page,
+    pageCount,
     matchedOffers: matched.length,
     totalOffers: rows.length,
     facetCounts,

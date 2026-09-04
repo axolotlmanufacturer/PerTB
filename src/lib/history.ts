@@ -1,5 +1,4 @@
 import { pricePerTbCents } from './pricing';
-import type { DriveRow } from './table';
 
 /**
  * Price history — the 90-day window behind the sparkline column and the
@@ -39,12 +38,25 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export interface PriceObservation {
   /** Epoch milliseconds. */
   at: number;
+  /**
+   * Which offer this came from. The series is a step function per offer, so
+   * the grouping has to survive the offer being deleted — which is why this is
+   * a denormalised string on PricePoint rather than a foreign key.
+   */
+  offerKey: string;
+  /** The lot size AT THE TIME OBSERVED, not whatever it is read as today. */
+  lotSize: number;
   priceCents: number;
   shippingCents: number;
 }
 
-/** offerId → observations, oldest first. */
+/** `productId|condition` → observations, oldest first. */
 export type HistoryIndex = ReadonlyMap<string, readonly PriceObservation[]>;
+
+/** The key both the loader and the table group by. */
+export function historyKey(productId: string, condition: string): string {
+  return `${productId}|${condition}`;
+}
 
 export interface SeriesPoint {
   at: number;
@@ -72,14 +84,14 @@ export interface GroupHistory {
 }
 
 /**
- * The $/TB an offer was at, at each of its observations.
+ * The $/TB each observation represents.
  *
- * Capacity and lot size come from the offer as it stands now. If normalisation
- * later re-reads a listing as a lot of four, its whole history re-scales — and
- * that is correct, because the old figure was wrong.
+ * Capacity is the product's, which is stable. Lot size is the observation's
+ * own: a listing re-read as a lot of four should not retroactively re-scale
+ * three months of history that were genuinely observed at a lot of one.
  */
-function offerSeries(
-  row: DriveRow,
+function toSeries(
+  capacityBytes: bigint,
   observations: readonly PriceObservation[],
   includeShipping: boolean,
 ): SeriesPoint[] {
@@ -88,8 +100,8 @@ function offerSeries(
       at: observation.at,
       pptCents: pricePerTbCents(
         {
-          capacityBytes: row.capacityBytes,
-          lotSize: row.lotSize,
+          capacityBytes,
+          lotSize: observation.lotSize,
           priceCents: observation.priceCents,
           shippingCents: observation.shippingCents,
         },
@@ -111,17 +123,26 @@ function offerSeries(
  * different seller undercut it.
  */
 export function buildGroupHistory(
-  rows: readonly DriveRow[],
-  index: HistoryIndex,
+  capacityBytes: bigint,
+  observations: readonly PriceObservation[],
   includeShipping: boolean,
   now: number = Date.now(),
 ): GroupHistory | null {
-  const perOffer: SeriesPoint[][] = [];
-  for (const row of rows) {
-    const observations = index.get(row.offerId);
-    if (!observations || observations.length === 0) continue;
-    perOffer.push(offerSeries(row, observations, includeShipping));
+  if (observations.length === 0) return null;
+
+  // Split back into one step function per offer. Sellers that have since sold
+  // out still count: their prices were real while they were live, and dropping
+  // them would rewrite the past every time a listing ends.
+  const byOffer = new Map<string, PriceObservation[]>();
+  for (const observation of observations) {
+    const existing = byOffer.get(observation.offerKey);
+    if (existing) existing.push(observation);
+    else byOffer.set(observation.offerKey, [observation]);
   }
+
+  const perOffer = [...byOffer.values()].map((points) =>
+    toSeries(capacityBytes, points, includeShipping),
+  );
   if (perOffer.length === 0) return null;
 
   const timestamps = [...new Set(perOffer.flatMap((s) => s.map((p) => p.at)))].sort(

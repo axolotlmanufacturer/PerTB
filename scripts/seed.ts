@@ -71,11 +71,22 @@ function hash(text: string): number {
  */
 async function backfillHistory(now: Date): Promise<number> {
   const offers = await prisma.offer.findMany({
-    select: { id: true, externalId: true, priceCents: true, shippingCents: true },
+    select: {
+      id: true,
+      externalId: true,
+      productId: true,
+      condition: true,
+      lotSize: true,
+      priceCents: true,
+      shippingCents: true,
+    },
   });
 
   const rows: {
-    offerId: string;
+    productId: string;
+    offerKey: string;
+    condition: (typeof offers)[number]['condition'];
+    lotSize: number;
     priceCents: number;
     shippingCents: number;
     observedAt: Date;
@@ -101,7 +112,10 @@ async function backfillHistory(now: Date): Promise<number> {
 
       const daysAgo = (depthDays * i) / changes;
       rows.push({
-        offerId: offer.id,
+        productId: offer.productId,
+        offerKey: offer.id,
+        condition: offer.condition,
+        lotSize: offer.lotSize,
         priceCents,
         shippingCents: offer.shippingCents,
         observedAt: new Date(now.getTime() - daysAgo * DAY_MS),

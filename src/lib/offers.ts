@@ -1,4 +1,9 @@
-import { HISTORY_WINDOW_DAYS, type HistoryIndex, type PriceObservation } from './history';
+import {
+  HISTORY_WINDOW_DAYS,
+  historyKey,
+  type HistoryIndex,
+  type PriceObservation,
+} from './history';
 import { CONFIDENCE_THRESHOLD } from './normalize';
 import { fromPrismaFormFactor } from './prisma-enums';
 import { prisma } from './db';
@@ -101,19 +106,20 @@ export async function loadDriveRows(
 }
 
 /**
- * The 90-day price history for live, publishable offers (ticket 5.1).
+ * The 90-day price history for live, publishable products (ticket 5.1).
  *
- * One query, indexed on `observedAt`, mirroring the two non-negotiable filters
- * in `loadDriveRows` — an expired or quarantined offer has no display surface,
- * so loading its history would be work done for nothing.
+ * One query, indexed on (productId, condition, observedAt), mirroring the two
+ * non-negotiable filters in `loadDriveRows` — a quarantined or rejected product
+ * has no display surface, so loading its history would be work done for
+ * nothing.
  *
  * The volume stays modest because a PricePoint is written only when a price
  * actually moves (CLAUDE.md §3.4); writing one every sweep would make this
  * query eight times the catalogue per day.
  *
- * NOTE: PricePoint cascades from Offer, and the expiry pass hard-deletes
- * offers. History therefore reaches back only as far as a listing has been
- * continuously live — see the Phase 5 note in README.md.
+ * History now hangs off the Product, so it survives the offer being
+ * hard-deleted on expiry — a sold eBay listing no longer takes its own history
+ * with it.
  */
 export async function loadPriceHistory(
   now: Date = new Date(),
@@ -125,14 +131,17 @@ export async function loadPriceHistory(
   const points = await prisma.pricePoint.findMany({
     where: {
       observedAt: { gte: since },
-      offer: {
-        expiresAt: { gt: now },
-        product: { confidence: { gte: CONFIDENCE_THRESHOLD }, rejected: false },
-        ...(productId ? { productId } : {}),
+      product: {
+        confidence: { gte: CONFIDENCE_THRESHOLD },
+        rejected: false,
+        ...(productId ? { id: productId } : {}),
       },
     },
     select: {
-      offerId: true,
+      productId: true,
+      condition: true,
+      offerKey: true,
+      lotSize: true,
       priceCents: true,
       shippingCents: true,
       observedAt: true,
@@ -144,12 +153,15 @@ export async function loadPriceHistory(
   for (const point of points) {
     const observation: PriceObservation = {
       at: point.observedAt.getTime(),
+      offerKey: point.offerKey,
+      lotSize: point.lotSize,
       priceCents: point.priceCents,
       shippingCents: point.shippingCents,
     };
-    const existing = index.get(point.offerId);
+    const key = historyKey(point.productId, point.condition);
+    const existing = index.get(key);
     if (existing) existing.push(observation);
-    else index.set(point.offerId, [observation]);
+    else index.set(key, [observation]);
   }
   return index;
 }

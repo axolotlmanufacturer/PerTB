@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { DriveTable } from '@/components/DriveTable';
-import type { HistoryIndex, PriceObservation } from '@/lib/history';
+import { historyKey, type HistoryIndex, type PriceObservation } from '@/lib/history';
 import { EMPTY_QUERY, type Query } from '@/lib/query';
 import { buildTable, type DriveRow } from '@/lib/table';
 
@@ -57,15 +57,18 @@ function row(overrides: Partial<DriveRow> = {}): DriveRow {
 }
 
 function history(
-  offerId: string,
+  productId: string,
+  condition: string,
   points: [daysAgo: number, priceCents: number][],
 ): HistoryIndex {
   const observations: PriceObservation[] = points.map(([days, priceCents]) => ({
     at: NOW - days * DAY,
+    offerKey: 'o',
+    lotSize: 1,
     priceCents,
     shippingCents: 0,
   }));
-  return new Map([[offerId, observations]]);
+  return new Map([[historyKey(productId, condition), observations]]);
 }
 
 function render(
@@ -159,7 +162,7 @@ describe('the history column (tickets 5.1, 5.2)', () => {
   it('draws a sparkline and links to the detail view', () => {
     const a = row({ offerId: 'a', productId: 'prod-1', condition: 'used' });
     const html = render([a], {
-      history: history('a', [
+      history: history('prod-1', 'used', [
         [60, 34_000],
         [20, 30_000],
         [2, 26_000],
@@ -173,9 +176,9 @@ describe('the history column (tickets 5.1, 5.2)', () => {
   });
 
   it('awards the badge with the window it actually observed', () => {
-    const a = row({ offerId: 'a' });
+    const a = row({ offerId: 'a', productId: 'prod-badge' });
     const html = render([a], {
-      history: history('a', [
+      history: history('prod-badge', 'new', [
         [60, 34_000],
         [2, 26_000],
       ]),
@@ -184,9 +187,9 @@ describe('the history column (tickets 5.1, 5.2)', () => {
   });
 
   it('says nothing about a window too short to judge', () => {
-    const a = row({ offerId: 'a' });
+    const a = row({ offerId: 'a', productId: 'prod-short' });
     const html = render([a], {
-      history: history('a', [
+      history: history('prod-short', 'new', [
         [3, 34_000],
         [1, 26_000],
       ]),

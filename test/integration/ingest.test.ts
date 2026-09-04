@@ -227,19 +227,28 @@ describeDb('price history', () => {
       now,
     });
 
-    const offer = await prisma.offer.findFirst({ select: { id: true } });
+    const offer = await prisma.offer.findFirst({
+      select: { id: true, productId: true, condition: true, lotSize: true },
+    });
     expect(offer).not.toBeNull();
+
+    const base = {
+      productId: offer!.productId,
+      offerKey: offer!.id,
+      condition: offer!.condition,
+      lotSize: offer!.lotSize,
+    };
 
     // Two observations either side of the eighteen-month line.
     await prisma.pricePoint.createMany({
       data: [
         {
-          offerId: offer!.id,
+          ...base,
           priceCents: 111_11,
           observedAt: monthsAgo(now, PRICE_POINT_RETENTION_MONTHS + 1),
         },
         {
-          offerId: offer!.id,
+          ...base,
           priceCents: 222_22,
           observedAt: monthsAgo(now, PRICE_POINT_RETENTION_MONTHS - 1),
         },
@@ -256,12 +265,42 @@ describeDb('price history', () => {
     expect(swept.pricePointsTrimmed).toBe(1);
 
     const remaining = await prisma.pricePoint.findMany({
-      where: { offerId: offer!.id },
+      where: { offerKey: offer!.id },
       select: { priceCents: true },
     });
     const prices = remaining.map((p) => p.priceCents);
     expect(prices).toContain(222_22);
     expect(prices).not.toContain(111_11);
+  });
+
+  it('keeps a sold listing history after the offer is hard-deleted', async () => {
+    // The reason PricePoint hangs off Product. eBay inventory is single-unit,
+    // so an offer vanishing is the normal case rather than the exception — and
+    // it used to take the whole series with it.
+    const now = new Date();
+    await runIngest({
+      prisma,
+      adapters: [createMockAdapter('ebay')],
+      logger: silent,
+      now,
+    });
+
+    const offer = await prisma.offer.findFirst({ select: { id: true, productId: true } });
+    expect(offer).not.toBeNull();
+
+    const before = await prisma.pricePoint.count({ where: { offerKey: offer!.id } });
+    expect(before).toBeGreaterThan(0);
+
+    await prisma.offer.delete({ where: { id: offer!.id } });
+
+    const after = await prisma.pricePoint.count({ where: { offerKey: offer!.id } });
+    expect(after).toBe(before);
+
+    // And it is still attributed to the drive, which is how it gets read back.
+    const attributed = await prisma.pricePoint.count({
+      where: { productId: offer!.productId },
+    });
+    expect(attributed).toBeGreaterThan(0);
   });
 });
 

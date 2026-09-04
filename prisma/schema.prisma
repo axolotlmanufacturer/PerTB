@@ -1,6 +1,10 @@
 // perterabyte data model — CLAUDE.md §3.4.
 //
-//   Product ─1:N─ Offer ─1:N─ PricePoint
+//   Product ─1:N─ Offer
+//   Product ─1:N─ PricePoint   (offerKey is a plain string, not a relation)
+//
+// PricePoint used to hang off Offer. It does not any more: offers are
+// hard-deleted on expiry, so the history died with the listing. See the model.
 //
 // $/TB is NOT stored anywhere in here. It is derived at read time by
 // src/lib/pricing.ts, because the shipping and lot rules are user-toggleable
@@ -107,7 +111,8 @@ model Product {
   /// review, because the next sweep would otherwise resurrect it every time.
   rejected Boolean @default(false)
 
-  offers Offer[]
+  offers      Offer[]
+  pricePoints PricePoint[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -187,8 +192,6 @@ model Offer {
   /// ingest breaks for two days the table empties — that is correct.
   expiresAt DateTime
 
-  pricePoints PricePoint[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -205,8 +208,27 @@ model Offer {
 model PricePoint {
   id String @id @default(cuid())
 
-  offerId String
-  offer   Offer  @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  /// History hangs off the PRODUCT, not the offer.
+  ///
+  /// Offers are hard-deleted the moment they expire (§1.3), so a PricePoint
+  /// that cascaded from one could never outlive a sold eBay listing — the
+  /// 90-day window was really "as long as this listing has been live", and the
+  /// 18-month retention pass had almost nothing to bite on. Products are never
+  /// deleted by ingest, so this is where a series can actually accumulate.
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  /// Which offer this observation came from — a plain string, deliberately NOT
+  /// a relation. The series is a per-offer step function reconstructed at read
+  /// time, so the grouping has to survive the offer's deletion; a nullable
+  /// foreign key would collapse every dead seller into one bucket.
+  offerKey String
+
+  /// Denormalised from the offer, because the offer may be gone by the time
+  /// this is read — and because an observation should be priced with the lot
+  /// size it was observed at, not with whatever normalisation says today.
+  condition Condition
+  lotSize   Int       @default(1)
 
   priceCents    Int
   shippingCents Int @default(0)
@@ -215,6 +237,7 @@ model PricePoint {
 
   /// Written ONLY when the price changed. Writing every sweep would grow this
   /// table by the full catalogue size eight times a day.
-  @@index([offerId, observedAt])
+  @@index([productId, condition, observedAt])
+  @@index([offerKey])
   @@index([observedAt])
 }

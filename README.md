@@ -268,6 +268,42 @@ waiting for it delays everything.
 
 ### Deviations from the brief
 
+**The table is paged, 100 rows to a page.** Every group used to go into one
+document; a real two-marketplace catalogue is thousands, and document size and
+LCP degrade linearly with it. Client-side virtualisation would break the
+property the whole architecture exists for, so the cap is server-side with a
+`?page=` parameter, real `<a href>`s, and `rel="prev"/"next"`. Page 1 is
+canonical. The caption and the floor count the **selection**, not the page — a
+floor that moved when you turned the page would be a different number wearing
+the same label.
+
+The cost: `robots.txt` disallows `/*?`, so pages beyond the first are not
+crawled, and rows 101+ of an unfiltered view are not indexed. That is the
+intended shape — the curated landings are the indexable surface and almost all
+of them hold under a page — but it is a real trade and worth revisiting if a
+landing ever grows past 100 rows.
+
+**Price history hangs off the Product, not the Offer.** Offers are hard-deleted
+on expiry, so a `PricePoint` that cascaded from one could never outlive a sold
+eBay listing: the "90-day window" was really "as long as this listing stayed
+live", and the 18-month retention pass had almost nothing to bite on. The point
+now carries `productId`, a denormalised `offerKey` (a plain string, so the
+per-offer step function survives the offer's deletion), and the `condition` and
+`lotSize` it was observed at — an observation should be priced with the lot size
+it was taken at, not with whatever normalisation says today. The migration
+backfills before it constrains, so it is safe on a populated database.
+
+**The ingest sweep reads in two queries and writes only what differs.** It used
+to do four or five sequential round trips per listing. Measured on the 400-row
+mock catalogue: **20 queries cold, 24 warm (91 ms)**, against roughly 1,800
+before. Most of the win is that an unchanged listing still needs its expiry
+pushed out, and one `updateMany` does all of them.
+
+**`/api/offers` is gone.** Nothing called it — `FacetRail` navigates through the
+router, which re-renders on the server and keeps the URL shareable. It was an
+unused, unauthenticated export of the whole catalogue. `CLAUDE.md` §6 described
+it, so §6 is amended to record the removal and the reasoning.
+
 **MDX guides carry their metadata in TypeScript, not frontmatter.** `guides.ts`
 and `legal.ts` hold title, description, summary and date so they are typed,
 testable and available to the index page, the footer and the sitemap without

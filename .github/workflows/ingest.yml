@@ -1,0 +1,106 @@
+name: Ingest
+
+# Ingest runs HERE, not in Vercel Cron. Vercel caps a cron invocation at 300
+# seconds and a full two-marketplace keyword sweep exceeds it (known trap 4).
+# The Vercel route (/api/cron/refresh) is a manual trigger and the cache
+# revalidation hook only.
+on:
+  schedule:
+    # Every 3 hours. Offers carry a 6-hour TTL on eBay and 24 on Amazon, so a
+    # missed run is survivable; two consecutive misses start emptying the
+    # table, which is the intended behaviour rather than serving stale prices.
+    - cron: '17 */3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  # Never overlap sweeps: two writers racing on the same upsert keys would
+  # produce spurious PricePoint rows.
+  group: ingest
+  cancel-in-progress: false
+
+jobs:
+  ingest:
+    name: Sweep and refresh
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply migrations
+        run: pnpm db:deploy
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Ingest
+        run: pnpm ingest
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+          MOCK_DATA: 'false'
+
+          # eBay is the primary source and the differentiator.
+          EBAY_ENABLED: ${{ vars.EBAY_ENABLED || 'false' }}
+          EBAY_CLIENT_ID: ${{ secrets.EBAY_CLIENT_ID }}
+          EBAY_CLIENT_SECRET: ${{ secrets.EBAY_CLIENT_SECRET }}
+          EBAY_MARKETPLACE_ID: ${{ vars.EBAY_MARKETPLACE_ID || 'EBAY_US' }}
+          EPN_CAMPAIGN_ID: ${{ secrets.EPN_CAMPAIGN_ID }}
+          EPN_ROTATION_ID: ${{ vars.EPN_ROTATION_ID }}
+          EBAY_MIN_FEEDBACK_PCT: ${{ vars.EBAY_MIN_FEEDBACK_PCT || '98.5' }}
+          EBAY_MIN_FEEDBACK_COUNT: ${{ vars.EBAY_MIN_FEEDBACK_COUNT || '50' }}
+
+          # A sweep that succeeds but writes almost nothing is the failure this
+          # job cannot otherwise tell you about: the table empties on its own
+          # six hours later and nothing raises a hand. Below the floor the run
+          # exits non-zero and reports to Sentry.
+          INGEST_MIN_OFFERS: ${{ vars.INGEST_MIN_OFFERS || '50' }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
+          # Amazon stays false until the account has 10 qualifying sales in the
+          # trailing 30 days. A run with this off is a NORMAL run, not a
+          # degraded one — see CLAUDE.md §1.4.
+          AMAZON_ENABLED: ${{ vars.AMAZON_ENABLED || 'false' }}
+          AMAZON_CREDENTIAL_ID: ${{ secrets.AMAZON_CREDENTIAL_ID }}
+          AMAZON_CREDENTIAL_SECRET: ${{ secrets.AMAZON_CREDENTIAL_SECRET }}
+          AMAZON_PARTNER_TAG: ${{ secrets.AMAZON_PARTNER_TAG }}
+          AMAZON_MARKETPLACE: ${{ vars.AMAZON_MARKETPLACE || 'www.amazon.com' }}
+
+          # revalidateTag cannot be called from outside the deployment
+          # (known trap 11), so the job posts to an authenticated route.
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
+          REVALIDATE_SECRET: ${{ secrets.REVALIDATE_SECRET }}
+
+      # A failed sweep is not cosmetic: offers expire on a 6-hour TTL, so two
+      # consecutive failures start emptying the table.
+      - name: Report failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Ingest failed: ${new Date().toISOString().slice(0, 16).replace('T', ' ')}Z`,
+              body: [
+                'The 3-hourly ingest sweep failed.',
+                '',
+                `Run: ${run}`,
+                '',
+                'Offers carry a 6-hour TTL on eBay and 24 hours on Amazon, and the',
+                'ingest job hard-deletes anything past its expiry. Two consecutive',
+                'failures will start emptying the table — that is correct behaviour',
+                'under the 24-hour rule, not a bug to work around.',
+              ].join('\n'),
+              labels: ['ingest-failure'],
+            });

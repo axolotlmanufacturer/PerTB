@@ -1,0 +1,95 @@
+The lowest genuine $/TB on the market is not a sale. It is a datacentre
+decommissioning its three-year-old fleet, and the drives arriving on eBay by the
+pallet. Enterprise helium drives that cost several hundred dollars new turn up
+at a quarter of the price with five figures on the hour counter.
+
+That is a real trade, and it is worth making with the numbers in front of you.
+
+## What power-on hours actually mean
+
+Power-on hours count the time the drive has been spinning. Not reads, not
+writes, not thermal cycles — just hours energised.
+
+For context: **one year of continuous operation is 8,760 hours.** So a drive
+advertised at 45,000 hours has run for roughly five years, which is a normal
+service life for a datacentre and past the warranty of almost any consumer
+drive.
+
+Two things temper the alarm.
+
+**Enterprise drives are specified for it.** A drive rated at 2.5 million hours
+MTBF with a 550 TB/year workload rating is built to spin continuously for five
+years. That is what you are buying.
+
+**Constant operation is the gentle case.** The most-cited large-scale failure
+data — Backblaze publishes theirs quarterly — shows failure concentrated at the
+very start of life and again several years in, with a long flat middle. Drives
+that spin up and down repeatedly, or run hot, or get knocked, do worse than
+drives that spin steadily in a cool rack.
+
+A five-year-old drive that has spent those years in a temperature-controlled
+datacentre is often in better condition than a three-year-old drive that has
+lived under someone's desk.
+
+## The numbers that should worry you more
+
+If a seller will give you a SMART report, these matter more than the hour count:
+
+- **Reallocated sector count (SMART 5).** Sectors that failed and were remapped
+  to spares. Zero is what you want. Anything non-zero and rising is a drive
+  actively failing.
+- **Current pending sector count (SMART 197).** Sectors that failed a read and
+  are awaiting reallocation. Worse than reallocated: the data is at risk now.
+- **Uncorrectable errors (SMART 198).** Non-zero means reads have already
+  failed outright.
+- **Start/stop and load-unload cycles.** A drive with 12,000 hours and 40,000
+  load cycles has had a harder life than one with 45,000 hours and 200.
+- **Helium level (SMART 22)**, on sealed helium drives. Below 100 is a leak,
+  and a leaking helium drive is finished.
+
+A listing offering zero reallocated sectors at 45,000 hours is a better buy than
+one offering 200 reallocated sectors at 9,000.
+
+## What "tested" means, and does not
+
+"Tested" in a listing title usually means the seller ran a short SMART self-test
+and confirmed the drive spins up and reports PASSED. That is a check for
+already-dead, not a prediction.
+
+Terms worth distinguishing:
+
+- **Manufacturer recertified** — returned to the manufacturer, tested, and
+  reissued with fresh warranty, often 1–2 years. The safest used tier and priced
+  accordingly.
+- **Refurbished** — anyone's word for anything. Ask who did it.
+- **Pull / tested pull** — removed from working equipment, powered on,
+  confirmed alive.
+- **As-is** — no claim at all.
+
+## Working the risk into the price
+
+Buy in numbers and treat failure as a running cost rather than an event.
+
+- **Assume some arrive dead.** Budget a spare. A 5% DOA rate at a third of the
+  price is still far ahead.
+- **Test before you trust.** Run a full surface read — `badblocks -svn` or a
+  long SMART self-test — before any drive holds data you care about. Most
+  failures that are going to happen early happen in the first fortnight.
+- **Parity, not hope.** These belong in an array with redundancy you would
+  accept losing a member of, and they belong under a real backup.
+- **Check the return window.** Thirty days of returns is worth real money per
+  terabyte, because it covers exactly the period when early failures show up.
+  Every used row here shows the seller's return policy for that reason.
+
+## What this site shows you
+
+Every used and renewed row carries, where the listing states it:
+
+- **Power-on hours**, parsed from the title or description.
+- **Warranty status** — and a `no warranty` flag where the seller says so.
+- **The return policy**.
+
+The $/TB figure alone would be a misleading number even though the arithmetic is
+right. Start from [used enterprise drives](/hdd/used-enterprise), and if you
+want the warranty back, compare against
+[manufacturer recertified](/hdd/recertified).

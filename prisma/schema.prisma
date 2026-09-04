@@ -1,0 +1,243 @@
+// perterabyte data model — CLAUDE.md §3.4.
+//
+//   Product ─1:N─ Offer
+//   Product ─1:N─ PricePoint   (offerKey is a plain string, not a relation)
+//
+// PricePoint used to hang off Offer. It does not any more: offers are
+// hard-deleted on expiry, so the history died with the listing. See the model.
+//
+// $/TB is NOT stored anywhere in here. It is derived at read time by
+// src/lib/pricing.ts, because the shipping and lot rules are user-toggleable
+// and a stored figure would be wrong for half the views.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums — these mirror src/lib/taxonomy.ts exactly. taxonomy.ts is the single
+// source of truth; a test asserts the two never drift apart.
+// ---------------------------------------------------------------------------
+
+enum Technology {
+  hdd_cmr
+  hdd_smr
+  sshd
+  ssd_tlc
+  ssd_qlc
+  ssd_mlc
+}
+
+enum FormFactor {
+  ff_3_5       @map("3.5")
+  ff_2_5       @map("2.5")
+  m2_2280
+  m2_2230
+  u2
+  ext_desktop
+  ext_portable
+}
+
+enum Interface {
+  sata3
+  sas12
+  pcie3
+  pcie4
+  pcie5
+  usb_g1
+  usb_g2
+  usb_g2x2
+}
+
+enum Condition {
+  new
+  renewed
+  used
+}
+
+enum Marketplace {
+  amazon
+  ebay
+}
+
+// ---------------------------------------------------------------------------
+// Product — the physical drive.
+// ---------------------------------------------------------------------------
+
+model Product {
+  id String @id @default(cuid())
+
+  brand String
+  model String
+
+  /// Capacity of ONE drive, never the lot total. BigInt because 24TB overflows
+  /// a 32-bit int, and because rounding storage capacity is how you get a
+  /// wrong $/TB. Must be .toString()ed at every JSON boundary — known trap 2.
+  capacityBytes BigInt
+
+  technology Technology?
+  formFactor FormFactor?
+  interface  Interface?
+  rpm        Int?
+  mpn        String?
+
+  /// Minimum confidence across the normalisation axes, not the mean.
+  /// Below CONFIDENCE_THRESHOLD (0.6) the product is quarantined and never
+  /// reaches a read path.
+  confidence Float
+
+  /// The shucking insight — CLAUDE.md §3.8.
+  shuckable         Boolean @default(false)
+  shuckedEquivalent String?
+
+  /// Which spec-dictionary entry resolved this, for the quarantine review UI.
+  dictionaryId String?
+
+  /// Set when a human has reviewed this product in /admin/quarantine (7.2).
+  /// Ingest then stops overwriting the axis fields and the confidence, because
+  /// a reviewer who read the actual listing knows more than the parser does —
+  /// otherwise the correction would be undone by the next sweep, three hours
+  /// later. A review is a verification, not a guess, so it is the one thing
+  /// allowed to raise confidence above what normalisation produced.
+  reviewedAt   DateTime?
+  reviewedNote String?
+
+  /// Rejected in review: not a drive, a mis-parse we cannot fix, an accessory
+  /// that slipped the filters. Never published, and never re-offered for
+  /// review, because the next sweep would otherwise resurrect it every time.
+  rejected Boolean @default(false)
+
+  offers      Offer[]
+  pricePoints PricePoint[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([brand, model, capacityBytes])
+  @@index([technology, formFactor, interface])
+  @@index([confidence])
+  @@index([shuckable])
+  // The quarantine queue: sub-threshold, not yet rejected.
+  @@index([rejected, confidence])
+}
+
+// ---------------------------------------------------------------------------
+// Offer — one marketplace listing of a Product.
+// ---------------------------------------------------------------------------
+
+model Offer {
+  id String @id @default(cuid())
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  marketplace Marketplace
+
+  /// ASIN, or the eBay legacy item id.
+  externalId String
+
+  /// The listing title exactly as the marketplace returned it.
+  ///
+  /// Kept solely so /admin/quarantine can show parsed-versus-raw (7.2). A
+  /// review UI that displays only what the parser produced cannot tell you
+  /// whether the parser was wrong. Nullable because rows written before this
+  /// column existed have none; the next sweep fills them in.
+  rawTitle String?
+
+  condition Condition
+
+  /// Number of physical drives in the listing. An undetected lot is the most
+  /// expensive normalisation failure there is: a "Lot of 5 x 4TB, $260" read
+  /// as a single drive computes to $13/TB and sits at the top of the table
+  /// forever, wrong.
+  lotSize Int @default(1)
+
+  priceCents Int
+
+  /// eBay CALCULATED shipping returns no cost because the buyer's postcode
+  /// decides it. Stored as 0 with shippingIsCalculated set, never invented
+  /// — known trap 6.
+  shippingCents        Int     @default(0)
+  shippingIsCalculated Boolean @default(false)
+
+  currency String @default("USD")
+
+  /// US-only at launch, but present from day one so multi-market is a
+  /// migration rather than a rewrite.
+  locale String @default("en-US")
+
+  inStock Boolean @default(true)
+
+  sellerName  String?
+  sellerScore Float?
+
+  /// Used-drive risk surfacing — CLAUDE.md §3.7. An unqualified "$4.20/TB" on
+  /// a drive with 45,000 hours and no returns is a misleading number even
+  /// though the arithmetic is right.
+  powerOnHours Int?
+  hasWarranty  Boolean?
+  returnPolicy String?
+
+  url String
+
+  fetchedAt DateTime @default(now())
+
+  /// THE 24-HOUR RULE. Amazon's Operating Agreement requires displayed prices
+  /// be refreshed or removed within 24 hours. Every read path filters on
+  /// expiresAt > now(), and the ingest job hard-deletes what is past it. If
+  /// ingest breaks for two days the table empties — that is correct.
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([marketplace, externalId])
+  @@index([expiresAt])
+  @@index([productId, condition])
+  @@index([inStock])
+}
+
+// ---------------------------------------------------------------------------
+// PricePoint — an observation, written only when the price actually changed.
+// ---------------------------------------------------------------------------
+
+model PricePoint {
+  id String @id @default(cuid())
+
+  /// History hangs off the PRODUCT, not the offer.
+  ///
+  /// Offers are hard-deleted the moment they expire (§1.3), so a PricePoint
+  /// that cascaded from one could never outlive a sold eBay listing — the
+  /// 90-day window was really "as long as this listing has been live", and the
+  /// 18-month retention pass had almost nothing to bite on. Products are never
+  /// deleted by ingest, so this is where a series can actually accumulate.
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  /// Which offer this observation came from — a plain string, deliberately NOT
+  /// a relation. The series is a per-offer step function reconstructed at read
+  /// time, so the grouping has to survive the offer's deletion; a nullable
+  /// foreign key would collapse every dead seller into one bucket.
+  offerKey String
+
+  /// Denormalised from the offer, because the offer may be gone by the time
+  /// this is read — and because an observation should be priced with the lot
+  /// size it was observed at, not with whatever normalisation says today.
+  condition Condition
+  lotSize   Int       @default(1)
+
+  priceCents    Int
+  shippingCents Int @default(0)
+
+  observedAt DateTime @default(now())
+
+  /// Written ONLY when the price changed. Writing every sweep would grow this
+  /// table by the full catalogue size eight times a day.
+  @@index([productId, condition, observedAt])
+  @@index([offerKey])
+  @@index([observedAt])
+}

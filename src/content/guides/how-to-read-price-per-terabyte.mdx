@@ -1,0 +1,81 @@
+Every other component in a PC advertises the number you actually care about. A
+CPU tells you cores and clocks; RAM tells you capacity and speed. Storage tells
+you a price and a capacity and leaves the division to you — and because the
+capacities span two orders of magnitude, the sticker price carries almost no
+information. A 2TB NVMe SSD and a 20TB hard drive routinely cost the same money.
+
+## The arithmetic
+
+```
+price per TB = (item price + shipping) ÷ (capacity of one drive × number of drives)
+```
+
+Three details in that line do all the work.
+
+### Terabytes are decimal, not binary
+
+A drive sold as "20TB" contains 20 × 10¹² bytes. Formatted, your operating
+system will report roughly 18.2 TiB, because it divides by 2⁴⁰ instead of 10¹².
+Nothing has been lost and nothing is being hidden from you — they are two
+different units with confusingly similar names.
+
+We price against the advertised figure, because that is the figure you are
+comparing across listings. A site that quoted TiB would show numbers about 10%
+higher than every competitor for identical drives, and every visitor would
+correctly conclude the numbers were wrong.
+
+### Shipping is part of the price
+
+It is included here by default, and turning it off is a deliberate act.
+
+Leave shipping out and the top of any table that includes eBay fills up with
+$0.99 items carrying $28 postage. That is not a pricing quirk to be normalised
+away; it is a listing strategy, and a comparison that ignores it ranks the
+listings that use it first, permanently.
+
+Some eBay listings report **calculated** shipping, where the cost depends on
+your postcode and is not knowable until you enter it. Those are marked
+`shipping unknown` and counted as zero. That understates them. It is the only
+honest option — the alternative is to invent a figure.
+
+### A lot of five is not one drive
+
+`Lot of 5 × 4TB, $260` is 20TB for $260, which is $13/TB. Read as a single 4TB
+drive it comes out at $65/TB — or, far worse, read the other way round, a
+listing priced per-drive gets divided by the lot total and lands at the top of
+the table at a price nobody can buy.
+
+Every row here shows a `lot of N` badge where the listing is a multi-drive lot,
+and the **Hide multi-drive lots** toggle removes them entirely. If you are
+filling one bay, use it.
+
+## What $/TB does not tell you
+
+It is a single scalar, and drives differ along axes it cannot see.
+
+- **Endurance.** A QLC SSD and a TLC SSD at the same $/TB are not the same
+  purchase if you write a lot. Check the TBW rating.
+- **Sustained write speed.** Consumer SSDs quote a burst figure served by an
+  SLC cache. Fill the cache on a QLC drive and the floor can be slower than a
+  hard drive.
+- **Recording technology.** See the [CMR vs SMR
+  guide](/guides/cmr-vs-smr-and-raid) — for an array this is the difference
+  between a rebuild that finishes and one that does not.
+- **Remaining life on used drives.** A datacentre pull at $4/TB with 45,000
+  power-on hours and no returns is a different proposition from the same price
+  at 8,000 hours with a 30-day window.
+- **Warranty.** Shucking an external voids it. Enterprise pulls usually have
+  none left at all.
+
+$/TB is the right first cut, and it is the number nobody publishes. It is not
+the whole decision.
+
+## Three ways the figure gets quoted wrong
+
+1. **Against MSRP rather than the live price.** A "62% off" $/TB computed from
+   a list price nobody has charged in two years.
+2. **Excluding shipping, silently.** Common, and it inverts the ranking at the
+   cheap end.
+3. **On a lot, without saying so.** The single most expensive mistake in this
+   whole category, and the reason lot detection is the most-tested rule in this
+   codebase.

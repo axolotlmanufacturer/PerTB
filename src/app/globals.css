@@ -1,0 +1,1177 @@
+/*
+ * perterabyte — the stylesheet.
+ *
+ * Density over whitespace. The audience is NAS builders and homelab operators
+ * reading a table of numbers to the cent; there is no hero section and no
+ * marketing voice anywhere on this site (CLAUDE.md §0).
+ *
+ * "Modern" here means the craft, not the fashion: a real type scale, hairline
+ * rules instead of boxes, tabular figures that line up, a sticky header so the
+ * column you are reading stays labelled, and focus states you can actually
+ * see. It does not mean cards, gradients, or air.
+ *
+ * Two constraints shape every rule below.
+ *
+ *   1. The Lighthouse budget is enforced in CI: LCP < 1.8s, CLS < 0.05,
+ *      TBT < 200ms. So: no webfonts (a font swap is a layout shift and a
+ *      round trip), no animation on anything that affects layout, and no
+ *      backdrop-filter on a surface that spans the viewport.
+ *   2. The page must be complete and correct with JavaScript off. Nothing
+ *      here is applied by script, and no state lives in a class a client
+ *      component has to toggle.
+ */
+
+:root {
+  color-scheme: light dark;
+
+  /* Neutrals, slightly cool. The table is mostly rules and numbers, so the
+     steps between these matter more than the hues do. */
+  --bg: #fbfbfc;
+  --surface: #ffffff;
+  --surface-2: #f4f5f7;
+  --fg: #14171a;
+  --fg-muted: #5f6874;
+  --fg-faint: #68717d;
+  --border: #e2e5ea;
+  --border-strong: #cdd2da;
+
+  --accent: #1552e0;
+  --accent-soft: #e8effd;
+  /* The market floor marker, and price movement. Green/red carry meaning here
+     and are always paired with a number or a word, never used alone. */
+  --floor: #0a7f3f;
+  --down: #0a7f3f;
+  --up: #b4232b;
+  --warn: #8a5f00;
+  --warn-soft: #fdf4e0;
+
+  --mono:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
+  --sans: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* A four-step scale. Everything on the site is one of these sizes. */
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-base: 13px;
+  --text-md: 14px;
+  --text-lg: 17px;
+
+  --radius: 6px;
+  --radius-sm: 4px;
+
+  --rail-width: 196px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0b0d10;
+    --surface: #101317;
+    --surface-2: #171b21;
+    --fg: #e6e9ee;
+    --fg-muted: #99a2ae;
+    --fg-faint: #7d8694;
+    --border: #232830;
+    --border-strong: #333a45;
+
+    --accent: #6ba3ff;
+    --accent-soft: #16233a;
+    --floor: #43d585;
+    --down: #43d585;
+    --up: #ff7b7b;
+    --warn: #e5aa47;
+    --warn-soft: #2a2110;
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  /* The table is long. Anchor jumps and the sticky header need the offset. */
+  scroll-padding-top: 3rem;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--sans);
+  font-size: var(--text-md);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a {
+  color: var(--accent);
+  text-underline-offset: 2px;
+  text-decoration-thickness: from-font;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+/* Visible, and only on keyboard focus. A table this dense is unusable by
+   keyboard without it. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+code,
+.tabular {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Shell ────────────────────────────────────────────────────────────── */
+
+.shell {
+  max-width: 92rem;
+  margin: 0 auto;
+  padding: 1.25rem 1.25rem 0;
+}
+
+@media (max-width: 640px) {
+  .shell {
+    padding: 0.875rem 0.875rem 0;
+  }
+}
+
+/*
+ * The masthead is one line: what this is, and the way back. Deliberately not a
+ * header band — a site whose product is a table should open with the table.
+ */
+.masthead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.6rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.masthead__title {
+  font-size: var(--text-lg);
+  font-weight: 640;
+  letter-spacing: -0.011em;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.masthead__home {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--fg-muted);
+  white-space: nowrap;
+}
+
+.masthead__home:hover {
+  color: var(--accent);
+}
+
+.intro {
+  margin: 0 0 1rem;
+  color: var(--fg-muted);
+  max-width: 78ch;
+  font-size: var(--text-base);
+}
+
+.crumbs {
+  font-size: var(--text-sm);
+  color: var(--fg-faint);
+  margin-bottom: 0.5rem;
+}
+
+/* Underlined, not just tinted: these sit inside a run of muted text, and a
+   link distinguished only by colour fails for anyone who cannot see the
+   difference (Lighthouse link-in-text-block). */
+.crumbs a {
+  color: var(--fg-muted);
+  text-decoration: underline;
+}
+
+.crumbs a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.crumbs__sep {
+  margin: 0 0.35rem;
+  color: var(--border-strong);
+}
+
+/* ── Layout: rail + table ─────────────────────────────────────────────── */
+
+.layout {
+  display: grid;
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
+  gap: 1.75rem;
+  align-items: start;
+}
+
+.layout__rail {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  /* Room for the scrollbar so the checkboxes do not shift when it appears. */
+  padding-right: 0.25rem;
+  scrollbar-width: thin;
+}
+
+.layout__main {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .layout__rail {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* ── Dispersion strip ─────────────────────────────────────────────────── */
+
+.dispersion {
+  margin: 0 0 1rem;
+  padding: 0.5rem 0.6rem 0.35rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.dispersion__svg {
+  width: 100%;
+  height: 44px;
+  display: block;
+}
+
+.dispersion__legend {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--fg-faint);
+  font-size: var(--text-xs);
+  padding-top: 0.15rem;
+}
+
+.dispersion__legend > :nth-child(2) {
+  text-align: center;
+}
+
+/* ── The table ────────────────────────────────────────────────────────── */
+
+/*
+ * Eleven columns of single-line data do not fit a laptop, so the wrapper
+ * scrolls sideways.
+ *
+ * Above the width where the table DOES fit, the wrapper's overflow goes back to
+ * visible, and that is the whole reason the breakpoint exists: a sticky <th>
+ * inside a scroll container sticks to that container's own box, which is the
+ * full height of the table and never scrolls past, so the header only actually
+ * sticks to the viewport once the wrapper stops being a scroll container.
+ */
+.table-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+@media (min-width: 1600px) {
+  .table-scroll {
+    overflow: visible;
+  }
+}
+
+.dt {
+  width: 100%;
+  font-size: var(--text-base);
+  /* separate, not collapse: sticky <th> loses its borders under collapse. */
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.dt__caption {
+  caption-side: top;
+  text-align: left;
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  padding: 0 0 0.5rem;
+}
+
+.dt thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg);
+  text-align: left;
+  font-weight: 600;
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  padding: 0.5rem 0.6rem 0.4rem 0;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+/*
+ * One line per row, everywhere.
+ *
+ * This is the density rule made concrete. Let any cell wrap — a two-word drive
+ * name, a used drive's "17,353 h · no warranty · 30-day returns" — and that one
+ * cell sets the height of the whole row, so a handful of long values turn a
+ * 40-row screen into a 12-row screen. Scrolling sideways to reach the last
+ * column is a smaller cost than losing two thirds of the rows.
+ */
+.dt tbody td {
+  padding: 0.4rem 0.6rem 0.4rem 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.dt tbody tr:hover td {
+  background: var(--surface-2);
+}
+
+.dt tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Numbers align on the decimal point or they are not comparable at a glance. */
+.dt .num {
+  text-align: right;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.dt th.num {
+  text-align: right;
+}
+
+.dt .nowrap {
+  white-space: nowrap;
+}
+
+/* The one number the site exists for. */
+.ppt {
+  font-size: var(--text-md);
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.ppt__unit {
+  color: var(--fg-faint);
+  font-weight: 400;
+  font-size: var(--text-xs);
+}
+
+.dt__drive {
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.dt__drive:hover {
+  text-decoration: underline;
+}
+
+.dt__risk {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+}
+
+.dt__empty {
+  color: var(--fg-muted);
+  margin: 1.5rem 0;
+  max-width: 70ch;
+}
+
+/* The expanded offer list is the one place a cell may grow — it is opt-in. */
+.dt__offers {
+  margin: 0.35rem 0 0.1rem;
+  padding: 0 0 0 0.9rem;
+  list-style: none;
+  border-left: 1px solid var(--border);
+  white-space: normal;
+}
+
+.dt__offers li {
+  margin-bottom: 0.2rem;
+  font-size: var(--text-sm);
+}
+
+.dt__more {
+  cursor: pointer;
+  color: var(--accent);
+  font-size: var(--text-sm);
+}
+
+.dt__more::marker {
+  color: var(--fg-faint);
+}
+
+/* ── Chips ────────────────────────────────────────────────────────────── */
+
+.chip {
+  display: inline-block;
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.35rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--fg-muted);
+  white-space: nowrap;
+  vertical-align: 1px;
+}
+
+.chip--warn {
+  border-color: var(--warn);
+  background: var(--warn-soft);
+  color: var(--warn);
+}
+
+.chip--good {
+  border-color: var(--floor);
+  color: var(--floor);
+}
+
+.chip--accent {
+  border-color: transparent;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* ── Sparkline ────────────────────────────────────────────────────────── */
+
+.spark {
+  display: block;
+  width: 60px;
+  height: 20px;
+  overflow: visible;
+}
+
+.spark__line {
+  fill: none;
+  stroke: var(--fg-muted);
+  stroke-width: 1.25;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.spark__now {
+  fill: var(--accent);
+}
+
+.spark-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.spark-cell:hover .spark__line {
+  stroke: var(--accent);
+}
+
+.spark-cell__delta {
+  font-size: var(--text-xs);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-faint);
+}
+
+.delta--down {
+  color: var(--down);
+}
+
+.delta--up {
+  color: var(--up);
+}
+
+.spark-cell__none {
+  color: var(--fg-faint);
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.spark-cell__none:hover {
+  color: var(--accent);
+}
+
+/* ── Facet rail ───────────────────────────────────────────────────────── */
+
+.rail {
+  font-size: var(--text-base);
+}
+
+.rail__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding-bottom: 0.4rem;
+  margin-bottom: 0.35rem;
+  border-bottom: 1px solid var(--border-strong);
+}
+
+.rail__title {
+  font-size: var(--text-xs);
+  font-weight: 640;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-muted);
+}
+
+.rail__reset {
+  font-size: var(--text-sm);
+}
+
+.facet {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 0;
+  padding: 0.5rem 0 0.55rem;
+}
+
+.facet:first-of-type {
+  border-top: 0;
+  padding-top: 0.25rem;
+}
+
+.facet__legend {
+  padding: 0;
+  font-weight: 600;
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin-bottom: 0.25rem;
+}
+
+.opt {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.12rem 0.25rem 0.12rem 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  line-height: 1.4;
+}
+
+.opt:hover {
+  background: var(--surface-2);
+}
+
+/*
+ * The rail is the one place on this site with real pointer targets, and the
+ * browser default checkbox is 13px square.
+ *
+ * WCAG 2.2 wants 24x24, or smaller targets spaced so that no other target sits
+ * within a 24px circle. 18px controls on 28px rows satisfy the spacing form of
+ * the rule and are the difference between a rail you can use on a laptop
+ * trackpad and one you fight. It costs the rail about 140px of height; it is
+ * sticky and scrolls, so that is the cheap side of the trade.
+ */
+.opt {
+  min-height: 28px;
+}
+
+.opt input[type='checkbox'] {
+  accent-color: var(--accent);
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex: none;
+}
+
+/* Zero-count options stay visible and clickable: they are how a user discovers
+   what widening a filter would show. Muted, never hidden, never disabled. */
+.opt--empty {
+  color: var(--fg-faint);
+}
+
+.opt__count {
+  margin-left: auto;
+  color: var(--fg-faint);
+  font-size: var(--text-xs);
+}
+
+.rail__range {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.field {
+  width: 100%;
+  min-width: 0;
+  padding: 0.25rem 0.4rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: var(--text-sm);
+}
+
+.field:hover {
+  border-color: var(--fg-faint);
+}
+
+.btn {
+  margin-top: 0.5rem;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  color: var(--fg);
+  font: inherit;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.btn:hover {
+  border-color: var(--fg-faint);
+}
+
+/* ── Related views ────────────────────────────────────────────────────── */
+
+.related {
+  margin-top: 1.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.related__heading,
+.footer__heading {
+  font-size: var(--text-xs);
+  font-weight: 640;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin: 0 0 0.45rem;
+}
+
+.related__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.related__link {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  font-size: var(--text-sm);
+  text-decoration: none;
+  color: var(--fg-muted);
+}
+
+.related__link:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* ── Footer ───────────────────────────────────────────────────────────── */
+
+.footer {
+  border-top: 1px solid var(--border);
+  margin-top: 2.5rem;
+  padding-top: 1rem;
+  font-size: var(--text-sm);
+}
+
+.footer__columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem 1.25rem;
+  margin-bottom: 1.25rem;
+}
+
+/*
+ * Forty-eight links at a 14px line height sit about 20px apart, which fails
+ * the WCAG 2.2 target-size rule and is genuinely fiddly on a trackpad. The
+ * padding takes each anchor to a 24px box; the footer grows, which is the
+ * cheap side of the trade.
+ */
+.footer__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0;
+}
+
+.footer__list a {
+  display: inline-block;
+  padding: 5px 0;
+  text-decoration: none;
+  color: var(--fg-muted);
+}
+
+.footer__list a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.footer__disclosure {
+  color: var(--fg-faint);
+  max-width: 74ch;
+  margin: 0;
+  padding-bottom: 1.5rem;
+  font-size: var(--text-sm);
+  line-height: 1.55;
+}
+
+/* ── Drive detail (ticket 5.3) ────────────────────────────────────────── */
+
+.detail__specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+}
+
+.detail__spec {
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-size: var(--text-sm);
+  color: var(--fg-muted);
+}
+
+.detail__spec b {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.panel__title {
+  font-size: var(--text-xs);
+  font-weight: 640;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  margin: 0 0 0.6rem;
+}
+
+.panel__note {
+  color: var(--fg-muted);
+  font-size: var(--text-sm);
+  margin: 0.6rem 0 0;
+  max-width: 76ch;
+}
+
+.chart {
+  width: 100%;
+  height: 160px;
+  display: block;
+}
+
+/* The chart stretches to the container width with preserveAspectRatio="none",
+   which would otherwise stretch the stroke with it. */
+.chart__line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.75;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart__axis {
+  stroke: var(--border-strong);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.chart__label {
+  fill: var(--fg-faint);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: 0.6rem;
+}
+
+.stat__label {
+  display: block;
+  font-size: var(--text-xs);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+
+.stat__value {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+/* Screen-reader-only, for headings a sighted reader gets from layout. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Prose: guides and the legal set (tickets 7.1, 7.3) ───────────────── */
+
+/*
+ * The one place on this site with generous measure and leading. The density
+ * rule is about the table — an article read start to finish has the opposite
+ * requirement, and 66 characters is where long-form stops being tiring.
+ */
+.standfirst {
+  font-size: var(--text-lg);
+  line-height: 1.45;
+  color: var(--fg-muted);
+  max-width: 62ch;
+  margin: 0 0 0.5rem;
+  letter-spacing: -0.005em;
+}
+
+.page-meta {
+  font-size: var(--text-sm);
+  color: var(--fg-faint);
+  margin: 0 0 1.75rem;
+}
+
+.prose {
+  max-width: 66ch;
+  font-size: 15px;
+  line-height: 1.65;
+  padding-bottom: 1rem;
+}
+
+.prose h2 {
+  font-size: var(--text-lg);
+  font-weight: 640;
+  letter-spacing: -0.011em;
+  margin: 2rem 0 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.prose h3 {
+  font-size: 15px;
+  font-weight: 640;
+  margin: 1.5rem 0 0.35rem;
+}
+
+.prose p {
+  margin: 0 0 0.9rem;
+}
+
+.prose ul,
+.prose ol {
+  margin: 0 0 1rem;
+  padding-left: 1.25rem;
+}
+
+.prose li {
+  margin-bottom: 0.35rem;
+}
+
+.prose strong {
+  font-weight: 640;
+}
+
+.prose code {
+  font-size: 0.9em;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.05em 0.3em;
+}
+
+.prose pre {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.75rem 0.9rem;
+  overflow-x: auto;
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+
+.prose pre code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: inherit;
+}
+
+/* A table inside prose is still a table: hairlines, tabular figures, scrolls
+   rather than squashing. */
+.prose table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: var(--text-base);
+  margin: 0 0 1.25rem;
+  display: block;
+  overflow-x: auto;
+}
+
+.prose th,
+.prose td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.35rem 0.75rem 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.prose th {
+  font-weight: 640;
+  border-bottom-color: var(--border-strong);
+}
+
+.prose blockquote {
+  margin: 0 0 1rem;
+  padding-left: 0.9rem;
+  border-left: 2px solid var(--border-strong);
+  color: var(--fg-muted);
+}
+
+.prose .related {
+  max-width: none;
+}
+
+/* An unmissable draft banner. It is not decoration: a visitor reads a privacy
+   policy as a commitment, and this one has not been reviewed yet. */
+.notice {
+  border: 1px solid var(--warn);
+  border-left-width: 3px;
+  background: var(--warn-soft);
+  color: var(--fg);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.9rem;
+  margin: 0 0 1.75rem;
+  font-size: var(--text-base);
+  line-height: 1.55;
+}
+
+.guide-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.guide-list > li {
+  padding-bottom: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.guide-list h2 {
+  margin: 0 0 0.25rem;
+  padding: 0;
+  border: 0;
+  font-size: var(--text-lg);
+}
+
+.guide-list h2 a {
+  text-decoration: none;
+}
+
+.guide-list h2 a:hover {
+  text-decoration: underline;
+}
+
+.guide-list p {
+  margin: 0;
+  color: var(--fg-muted);
+}
+
+/* ── Consent banner (ticket 7.4) ──────────────────────────────────────── */
+
+/*
+ * Fixed, so it costs no layout shift when it appears after hydration — the
+ * Lighthouse CLS budget is 0.05 and a banner that pushes the table down would
+ * spend most of it on its own.
+ */
+.consent {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  padding: 0.7rem 1.25rem;
+  background: var(--surface);
+  border-top: 1px solid var(--border-strong);
+  box-shadow: 0 -1px 12px rgb(0 0 0 / 8%);
+  font-size: var(--text-base);
+}
+
+.consent__text {
+  margin: 0;
+  max-width: 78ch;
+  color: var(--fg-muted);
+}
+
+.consent__actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.consent .btn {
+  margin-top: 0;
+}
+
+.btn--primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+  font-weight: 500;
+}
+
+.btn--primary:hover {
+  border-color: var(--accent);
+  filter: brightness(1.08);
+}
+
+/* ── Quarantine review (ticket 7.2) ───────────────────────────────────── */
+
+/* The raw title is the evidence. It leads, in the font the listing lives in. */
+.quarantine__raw {
+  font-family: var(--mono);
+  font-size: var(--text-base);
+  line-height: 1.5;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 0.7rem;
+  margin: 0 0 0.75rem;
+  overflow-wrap: anywhere;
+}
+
+.quarantine__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem 0.75rem;
+  margin: 0.75rem 0 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.quarantine__actions form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.quarantine__actions .btn {
+  margin-top: 0;
+}
+
+.quarantine__correct .field {
+  width: auto;
+  min-width: 9rem;
+}
+
+/* ── Pager (server-side paging, real links) ───────────────────────────── */
+
+.pager {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border-strong);
+  font-size: var(--text-sm);
+}
+
+.pager__count {
+  color: var(--fg-muted);
+}
+
+.pager__links {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+.pager__link {
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.pager__link:hover {
+  text-decoration: underline;
+}
+
+/* An unavailable direction stays in place rather than shifting the row. */
+.pager__link--off {
+  color: var(--fg-faint);
+  cursor: default;
+}
+
+.pager__page {
+  color: var(--fg-muted);
+}

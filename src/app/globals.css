@@ -1116,3 +1116,47 @@ code,
   width: auto;
   min-width: 9rem;
 }
+
+/* ── Pager (server-side paging, real links) ───────────────────────────── */
+
+.pager {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border-strong);
+  font-size: var(--text-sm);
+}
+
+.pager__count {
+  color: var(--fg-muted);
+}
+
+.pager__links {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+.pager__link {
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.pager__link:hover {
+  text-decoration: underline;
+}
+
+/* An unavailable direction stays in place rather than shifting the row. */
+.pager__link--off {
+  color: var(--fg-faint);
+  cursor: default;
+}
+
+.pager__page {
+  color: var(--fg-muted);
+}

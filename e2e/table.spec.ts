@@ -27,8 +27,16 @@ async function floorCents(page: Page): Promise<number | null> {
   return match?.[1] === undefined ? null : Math.round(Number(match[1]) * 100);
 }
 
+/**
+ * How many drives the SELECTION holds, from the caption — not how many rows
+ * this page happens to render.
+ *
+ * The table is paged, so counting <tr> would answer "how big is a page", which
+ * is a constant and tells you nothing about whether a filter did anything.
+ */
 async function rowCount(page: Page): Promise<number> {
-  return page.locator('table tbody tr').count();
+  const caption = (await page.locator('table caption').textContent()) ?? '';
+  return Number(caption.match(/([\d,]+) drives/)?.[1]?.replace(/,/g, '') ?? '0');
 }
 
 // ---------------------------------------------------------------------------
@@ -232,4 +240,57 @@ test('toggling a facet updates the URL without a full form submit', async ({
   // The server re-rendered: the table reflects the filter.
   const rows = await page.locator('table tbody tr').count();
   expect(rows).toBeGreaterThan(0);
+});
+
+test.describe('paging', () => {
+  test('caps the rows in the HTML and pages the rest', async ({ page }) => {
+    // Every group used to go into one document. At a real catalogue size that
+    // is megabytes of HTML and an LCP to match.
+    await page.goto('/');
+
+    const rows = page.locator('table.dt tbody tr');
+    expect(await rows.count()).toBeLessThanOrEqual(100);
+
+    // The caption counts the SELECTION, not the page — a caption that counted
+    // only visible rows would make the floor beside it look wrong.
+    const caption = (await page.locator('table caption').textContent()) ?? '';
+    const drives = Number(
+      caption.match(/([\d,]+) drives/)?.[1]?.replace(/,/g, '') ?? '0',
+    );
+    expect(drives).toBeGreaterThan(await rows.count());
+  });
+
+  test('page two is a real link with the whole query on it', async ({ page }) => {
+    await page.goto('/?technology=hdd_cmr');
+
+    const next = page.locator('.pager__link[rel="next"]');
+    await expect(next).toBeVisible();
+
+    await next.click();
+    // The filter survives the page turn, or paging silently resets the view.
+    await expect(page).toHaveURL(/technology=hdd_cmr/);
+    await expect(page).toHaveURL(/page=2/);
+    await expect(page.locator('.pager__link[rel="prev"]')).toBeVisible();
+  });
+
+  test('the floor does not change when you turn the page', async ({ page }) => {
+    // The floor is the floor of the selection. If it moved with the page it
+    // would be the cheapest drive ON THIS PAGE, which is a different number
+    // wearing the same label.
+    await page.goto('/');
+    const first = (await page.locator('table caption').textContent()) ?? '';
+
+    await page.goto('/?page=2');
+    const second = (await page.locator('table caption').textContent()) ?? '';
+
+    const floor = (s: string) => s.match(/cheapest \$([\d.]+)\/TB/)?.[1];
+    expect(floor(first)).toBeDefined();
+    expect(floor(second)).toBe(floor(first));
+  });
+
+  test('a page past the end is empty, not an error', async ({ page }) => {
+    const response = await page.goto('/?page=9999');
+    expect(response?.status()).toBe(200);
+    await expect(page.locator('table.dt')).toBeVisible();
+  });
 });

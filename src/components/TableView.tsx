@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { DispersionStrip } from '@/components/DispersionStrip';
 import { DriveTable } from '@/components/DriveTable';
 import { FacetRail } from '@/components/FacetRail';
+import { Pager } from '@/components/Pager';
 import { SiteFooter } from '@/components/SiteFooter';
 import { activeFilterCount, type Query } from '@/lib/query';
 import { SITE_NAME } from '@/lib/site';
@@ -69,6 +70,7 @@ export function TablePage({
 
         <section className="layout__main">
           <DriveTable view={view} query={query} subId={subId} shuckColumn={shuckColumn} />
+          <Pager view={view} query={query} basePath={action} />
           {below}
         </section>
       </div>

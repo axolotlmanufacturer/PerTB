@@ -39,7 +39,22 @@ export interface Query {
   shuckable: boolean | null;
 
   sort: Sort;
+
+  /** 1-based. Page 1 is canonical and never appears in the URL. */
+  page: number;
 }
+
+/**
+ * Rows rendered per page.
+ *
+ * Every group used to go into the HTML. At two hundred drives that is fine; a
+ * real two-marketplace catalogue is thousands, and document size and LCP
+ * degrade linearly with it. Client-side virtualisation would break the property
+ * the whole architecture exists for — the table has to be complete in the
+ * initial HTML with JavaScript off (CLAUDE.md §6) — so the cap is server-side
+ * and paged, with page 1 canonical.
+ */
+export const PAGE_SIZE = 100;
 
 export const SORTS = ['ppt_asc', 'ppt_desc', 'price_asc', 'capacity_desc'] as const;
 export type Sort = (typeof SORTS)[number];
@@ -54,6 +69,7 @@ const PARAM = {
   capMin: 'capMin',
   capMax: 'capMax',
   sort: 'sort',
+  page: 'page',
 } as const;
 
 /**
@@ -98,6 +114,19 @@ function readOne(input: SearchParamsInput, key: string): string | null {
  * Tri-state. Absent means "use the default"; `1`/`true`/`yes`/`on` and
  * `0`/`false`/`no`/`off` are all accepted because these URLs get hand-edited.
  */
+/**
+ * The page number, defaulting to 1 for anything that is not a page number.
+ *
+ * A crafted `?page=99999` is a valid request for a page past the end; the table
+ * renders empty rather than erroring, and the pager links back. What must never
+ * happen is a negative or fractional page reaching `slice`.
+ */
+function readPage(input: SearchParamsInput): number {
+  const raw = readOne(input, PARAM.page);
+  const n = Number(raw);
+  return Number.isInteger(n) && n >= 1 ? n : 1;
+}
+
 function readBool(input: SearchParamsInput, key: string): boolean | null {
   const raw = readOne(input, key);
   if (raw === null) return null;
@@ -134,6 +163,7 @@ export const querySchema = z.object({
   inStockOnly: z.boolean(),
   shuckable: z.boolean().nullable(),
   sort: z.enum(SORTS),
+  page: z.number().int().min(1),
 });
 
 export const EMPTY_QUERY: Query = {
@@ -149,6 +179,7 @@ export const EMPTY_QUERY: Query = {
   inStockOnly: DEFAULT_ADJUSTMENTS.inStockOnly,
   shuckable: null,
   sort: DEFAULT_SORT,
+  page: 1,
 };
 
 export function parseQuery(input: SearchParamsInput = {}): Query {
@@ -191,6 +222,10 @@ export function parseQuery(input: SearchParamsInput = {}): Query {
     inStockOnly: readBool(input, PARAM.inStock) ?? DEFAULT_ADJUSTMENTS.inStockOnly,
     shuckable: readBool(input, PARAM.shuckable),
     sort,
+    // A junk, zero or negative page is page 1 rather than an error, for the
+    // same reason an unknown facet key is dropped: a bad link should still
+    // render a useful table.
+    page: readPage(input),
   };
 }
 
@@ -236,8 +271,17 @@ export function serialiseQuery(query: Query): URLSearchParams {
     params.set(PARAM.shuckable, query.shuckable ? '1' : '0');
   }
   if (query.sort !== DEFAULT_SORT) params.set(PARAM.sort, query.sort);
+  // Page 1 is the canonical URL and carries no parameter.
+  if (query.page > 1) params.set(PARAM.page, String(query.page));
 
   return params;
+}
+
+/** The URL for another page of the same query. */
+export function pageHref(basePath: string, query: Query, page: number): string {
+  const params = serialiseQuery({ ...query, page });
+  const qs = params.toString();
+  return qs ? `${basePath}?${qs}` : basePath;
 }
 
 /** `?a=b&c=d`, or an empty string when nothing differs from the defaults. */

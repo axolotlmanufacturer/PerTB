@@ -297,7 +297,9 @@ export function DriveTable({
     <div className="table-scroll">
       <table className="dt">
         <caption className="dt__caption">
-          {view.groups.length.toLocaleString('en-US')} drives ·{' '}
+          {/* The selection, not the page. A caption that counted only the
+              visible rows would make the floor below it look wrong. */}
+          {view.totalGroups.toLocaleString('en-US')} drives ·{' '}
           {view.matchedOffers.toLocaleString('en-US')} offers
           {view.floorPptCents !== null && (
             <>

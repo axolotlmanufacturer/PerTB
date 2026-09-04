@@ -40,8 +40,13 @@ test('the detail view shows the chart and the offers behind a row', async ({ pag
 
   await page.goto(href!);
 
-  await expect(page.locator('svg.chart')).toBeVisible();
-  await expect(page.getByText('Now', { exact: true })).toBeVisible();
+  // One chart per (drive, condition): the same drive sold new and used is two
+  // series, not one, and must not be averaged into a single line. So assert on
+  // the first rather than on there being exactly one — how many a given drive
+  // has is a property of the catalogue, not of this page.
+  const charts = page.locator('svg.chart');
+  await expect(charts.first()).toBeVisible();
+  await expect(page.getByText('Now', { exact: true }).first()).toBeVisible();
 
   // Outbound links on this page are tagged with their own sub-id, and carry
   // the required rel (ticket 7.5 asserts the wording; this asserts presence).

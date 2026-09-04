@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { mapItem as mapAmazonItem, readAmazonConfig } from '@/lib/sources/amazon';
 import {
   mapItem as mapEbayItem,
@@ -285,6 +285,76 @@ describe('mock catalogue', () => {
       expect(l.priceCents).toBeGreaterThan(0);
       expect(l.priceCents).toBeLessThan(5_000_00);
     }
+  });
+
+  /**
+   * The mock has to reproduce the market's actual shape, not just its units.
+   *
+   * It used to price enterprise families at used-market rates and then apply
+   * the used discount on top, so a "new" Exos undercut every shuckable
+   * external. `/hdd/shuckable` then demonstrated the opposite of its own
+   * premise — the most-searched insight in the niche, shown backwards, in the
+   * one place a reader goes to check it.
+   */
+  describe('reproduces the market’s shape, not just its units', () => {
+    /** $/TB for one generated listing, through the real normalisation path. */
+    function perTb(listing: (typeof list)[number]): number | null {
+      const n = normalise(listing.title, listing.description ?? '');
+      if (n.rejected || n.capacityBytes === null) return null;
+      const tb = (Number(n.capacityBytes) * n.lotSize) / 1e12;
+      return listing.priceCents / 100 / tb;
+    }
+
+    let list: ReturnType<typeof mockListings>;
+    const median = (xs: number[]) =>
+      [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)] as number;
+
+    function medianPerTb(match: RegExp, condition: string): number {
+      const values = list
+        .filter((l) => l.condition === condition && match.test(l.title))
+        .map(perTb)
+        .filter((v): v is number => v !== null);
+      expect(values.length).toBeGreaterThan(2);
+      return median(values);
+    }
+
+    beforeEach(() => {
+      resetMockCatalogue();
+      list = mockListings();
+    });
+
+    it('prices new enterprise drives at retail, not at pull prices', () => {
+      // A sealed Exos or Ultrastar is a ~$17-19/TB drive; the median here is
+      // $19.14. The old baselines put it at about $12.50, which is a pull
+      // price, so the floor is set where drifting back would trip it.
+      const newEnterprise = medianPerTb(/Exos|Ultrastar/, 'new');
+      expect(newEnterprise).toBeGreaterThan(15);
+      expect(newEnterprise).toBeLessThan(30);
+    });
+
+    it('shucking beats a NEW bare drive, which is the whole insight', () => {
+      const external = medianPerTb(/easystore|Elements|Expansion/, 'new');
+      const bare = medianPerTb(/Exos|Ultrastar|IronWolf|WD Red/, 'new');
+      expect(external).toBeLessThan(bare);
+    });
+
+    it('and loses to a used enterprise pull, which is the nuance', () => {
+      // The received wisdom is that shucking always wins. It does not: a
+      // datacentre pull is cheaper per terabyte than any sealed external, and
+      // a table that hid that would be selling the reader the wrong drive.
+      const external = medianPerTb(/easystore|Elements|Expansion/, 'new');
+      const pull = medianPerTb(/Exos|Ultrastar/, 'used');
+      expect(pull).toBeLessThan(external);
+    });
+
+    it('discounts a datacentre pull far more steeply than a consumer drive', () => {
+      const enterpriseDrop =
+        medianPerTb(/Exos|Ultrastar/, 'used') / medianPerTb(/Exos|Ultrastar/, 'new');
+      const consumerDrop =
+        medianPerTb(/BarraCuda|WD Blue|WD Red/, 'used') /
+        medianPerTb(/BarraCuda|WD Blue|WD Red/, 'new');
+      expect(enterpriseDrop).toBeLessThan(consumerDrop);
+    });
   });
 });
 

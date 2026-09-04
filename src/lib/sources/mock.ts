@@ -30,7 +30,17 @@ interface Family {
   name: string;
   /** Capacities offered, in decimal TB. */
   capacities: number[];
-  /** Plausible new-condition price per TB, in dollars. */
+  /**
+   * Plausible NEW-RETAIL price per TB, in dollars — what the drive costs
+   * sealed, not what a pull of it goes for.
+   *
+   * This distinction used to be blurred: enterprise families carried
+   * used-market baselines, so a "new" Exos X18 priced at $12.50/TB when the
+   * real figure is nearer $17, and the used discount was then applied on top
+   * of an already-discounted number. It made every bare enterprise drive
+   * undercut the shuckable externals, which is the reverse of the real market
+   * and left `/hdd/shuckable` demonstrating the opposite of its own premise.
+   */
   baselinePerTb: number;
   kind: 'hdd' | 'ssd' | 'external';
   /** Enterprise families dominate the used market — datacentre pulls. */
@@ -65,7 +75,7 @@ const FAMILIES: Family[] = [
     brand: 'Seagate',
     name: 'Exos X16',
     capacities: [10, 12, 14, 16],
-    baselinePerTb: 12,
+    baselinePerTb: 17,
     kind: 'hdd',
     enterprise: true,
     tokens: 'SATA 6Gb/s 7200RPM 3.5" 512e Enterprise Hard Drive',
@@ -74,7 +84,7 @@ const FAMILIES: Family[] = [
     brand: 'Seagate',
     name: 'Exos X18',
     capacities: [14, 16, 18],
-    baselinePerTb: 12.5,
+    baselinePerTb: 17,
     kind: 'hdd',
     enterprise: true,
     tokens: 'SAS 12Gb/s 3.5in 7200 RPM Enterprise HDD',
@@ -83,7 +93,7 @@ const FAMILIES: Family[] = [
     brand: 'Seagate',
     name: 'Exos X20',
     capacities: [18, 20],
-    baselinePerTb: 13,
+    baselinePerTb: 16.5,
     kind: 'hdd',
     enterprise: true,
     tokens: 'SATA 6Gb/s 3.5 inch 7200RPM Enterprise Class',
@@ -92,7 +102,7 @@ const FAMILIES: Family[] = [
     brand: 'Seagate',
     name: 'Exos X22',
     capacities: [20, 22],
-    baselinePerTb: 14,
+    baselinePerTb: 17,
     kind: 'hdd',
     enterprise: true,
     tokens: 'SATA 7200 RPM 3.5" 512MB Cache Enterprise',
@@ -101,7 +111,7 @@ const FAMILIES: Family[] = [
     brand: 'Seagate',
     name: 'Exos X24',
     capacities: [20, 24],
-    baselinePerTb: 15,
+    baselinePerTb: 17,
     kind: 'hdd',
     enterprise: true,
     tokens: 'SAS 12Gb/s 7200RPM 3.5 inch Enterprise Hard Drive',
@@ -110,7 +120,7 @@ const FAMILIES: Family[] = [
     brand: 'Seagate',
     name: 'Exos 7E8',
     capacities: [4, 6, 8],
-    baselinePerTb: 13,
+    baselinePerTb: 22,
     kind: 'hdd',
     enterprise: true,
     tokens: 'SATA 6Gb/s 7200RPM 3.5 Enterprise ST8000NM000A',
@@ -151,7 +161,7 @@ const FAMILIES: Family[] = [
     brand: 'Seagate',
     name: 'Constellation ES.3',
     capacities: [2, 3, 4],
-    baselinePerTb: 11,
+    baselinePerTb: 30,
     kind: 'hdd',
     enterprise: true,
     tokens: '7200RPM SAS 6Gb/s 3.5" Enterprise',
@@ -185,7 +195,7 @@ const FAMILIES: Family[] = [
     brand: 'Western Digital',
     name: 'WD Ultrastar DC HC550',
     capacities: [16, 18],
-    baselinePerTb: 13,
+    baselinePerTb: 17,
     kind: 'hdd',
     enterprise: true,
     tokens: 'SATA 6Gb/s 7200RPM 3.5" Data Center Hard Drive',
@@ -194,7 +204,7 @@ const FAMILIES: Family[] = [
     brand: 'Western Digital',
     name: 'WD Ultrastar DC HC530',
     capacities: [14],
-    baselinePerTb: 12.5,
+    baselinePerTb: 18,
     kind: 'hdd',
     enterprise: true,
     tokens: 'SAS 12Gb/s 3.5 inch 7200RPM Enterprise',
@@ -203,7 +213,7 @@ const FAMILIES: Family[] = [
     brand: 'Western Digital',
     name: 'WD Ultrastar DC HC570',
     capacities: [22],
-    baselinePerTb: 14,
+    baselinePerTb: 17,
     kind: 'hdd',
     enterprise: true,
     tokens: 'SATA 6Gb/s 3.5 inch 7200RPM Data Center HDD',
@@ -212,7 +222,7 @@ const FAMILIES: Family[] = [
     brand: 'HGST',
     name: 'Ultrastar He10',
     capacities: [8, 10],
-    baselinePerTb: 10,
+    baselinePerTb: 22,
     kind: 'hdd',
     enterprise: true,
     tokens: 'SAS 12Gb/s 7200RPM 3.5 HUH721010AL4200',
@@ -221,7 +231,7 @@ const FAMILIES: Family[] = [
     brand: 'HGST',
     name: 'Ultrastar He12',
     capacities: [12],
-    baselinePerTb: 10.5,
+    baselinePerTb: 20,
     kind: 'hdd',
     enterprise: true,
     tokens: 'SATA 6Gb/s 7200RPM 3.5 inch CMR',
@@ -230,7 +240,7 @@ const FAMILIES: Family[] = [
     brand: 'HGST',
     name: 'Ultrastar He8',
     capacities: [8],
-    baselinePerTb: 9.5,
+    baselinePerTb: 25,
     kind: 'hdd',
     enterprise: true,
     tokens: 'SAS Hard Drive 3.5 inch 7200RPM Tested',
@@ -263,7 +273,7 @@ const FAMILIES: Family[] = [
     brand: 'Toshiba',
     name: 'MG08ACA16TE',
     capacities: [16],
-    baselinePerTb: 13,
+    baselinePerTb: 17,
     kind: 'hdd',
     enterprise: true,
     tokens: '7200RPM SATA 6Gb/s 3.5" Enterprise Hard Drive',
@@ -272,7 +282,7 @@ const FAMILIES: Family[] = [
     brand: 'Toshiba',
     name: 'MG09ACA18TE',
     capacities: [18],
-    baselinePerTb: 13.5,
+    baselinePerTb: 17,
     kind: 'hdd',
     enterprise: true,
     tokens: 'SATA 512e 7200 RPM 3.5 inch Enterprise HDD',
@@ -574,12 +584,27 @@ function pick<T>(rng: () => number, xs: readonly T[]): T {
   return xs[Math.floor(rng() * xs.length)] as T;
 }
 
-/** Multiplier applied to the new-condition price. */
-const CONDITION_DISCOUNT: Record<Condition, number> = {
-  new: 1,
-  renewed: 0.72,
-  used: 0.55,
+/**
+ * Multiplier applied to the new-retail price.
+ *
+ * One curve does not fit both markets. A used consumer drive is somebody's
+ * lightly-run desktop disk and sells at a modest discount; a used enterprise
+ * HDD is a datacentre pull with 30,000–50,000 power-on hours and sells at a
+ * third of new. Collapsing the two is what made the mock's cheap tier look
+ * like new drives rather than what it is.
+ *
+ * Enterprise SSDs are not in the steep bucket: datacentre NVMe is priced on
+ * remaining write endurance rather than hours, and holds its value.
+ */
+const CONDITION_DISCOUNT: Record<'consumer' | 'pull', Record<Condition, number>> = {
+  consumer: { new: 1, renewed: 0.74, used: 0.62 },
+  pull: { new: 1, renewed: 0.5, used: 0.35 },
 };
+
+function conditionDiscount(family: Family, condition: Condition): number {
+  const steep = family.enterprise === true && family.kind === 'hdd';
+  return CONDITION_DISCOUNT[steep ? 'pull' : 'consumer'][condition];
+}
 
 function generate(seed: number, count: number): RawListing[] {
   const rng = mulberry32(seed);
@@ -616,7 +641,7 @@ function generate(seed: number, count: number): RawListing[] {
 
     // Jitter around a plausible per-TB baseline.
     const jitter = 0.82 + rng() * 0.42;
-    const perTb = family.baselinePerTb * CONDITION_DISCOUNT[condition] * jitter;
+    const perTb = family.baselinePerTb * conditionDiscount(family, condition) * jitter;
     const priceCents = Math.round(perTb * capacity * lotSize * 100);
 
     // eBay carries the used and lot market; Amazon skews new and single.

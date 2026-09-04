@@ -19,7 +19,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 const REALM = 'perterabyte admin';
 
 /** Length-independent comparison, so timing does not leak the password. */
-function safeEqual(a: string, b: string): boolean {
+export function safeEqual(a: string, b: string): boolean {
   const encoder = new TextEncoder();
   const left = encoder.encode(a);
   const right = encoder.encode(b);
@@ -34,6 +34,40 @@ function safeEqual(a: string, b: string): boolean {
   return diff === 0;
 }
 
+/**
+ * Does this Authorization header carry the right password?
+ *
+ * Split out from the middleware so the accepting path can be tested. The e2e
+ * suite can only prove the 401 — CI has no ADMIN_PASSWORD to set — and a gate
+ * tested only for refusing is a gate that could be refusing everything.
+ */
+export function isAuthorisedAdmin(
+  header: string | null,
+  password: string | undefined,
+): boolean {
+  // Unset means CLOSED, not open. An unconfigured deployment must never be an
+  // unauthenticated one.
+  if (!password) return false;
+  if (!header?.startsWith('Basic ')) return false;
+
+  let decoded: string;
+  try {
+    // atob returns a BINARY string — one character per byte. Using it directly
+    // means an accented password arrives as its UTF-8 bytes reinterpreted as
+    // latin-1 and never matches, silently, forever. The realm advertises
+    // charset="UTF-8", so decode it as UTF-8.
+    const bytes = Uint8Array.from(atob(header.slice('Basic '.length)), (c) =>
+      c.charCodeAt(0),
+    );
+    decoded = new TextDecoder().decode(bytes);
+  } catch {
+    return false;
+  }
+
+  // "user:password" — the username is not checked; there is one operator.
+  return safeEqual(decoded.slice(decoded.indexOf(':') + 1), password);
+}
+
 function unauthorised(): NextResponse {
   return new NextResponse('Authentication required', {
     status: 401,
@@ -46,22 +80,11 @@ function unauthorised(): NextResponse {
 }
 
 export function middleware(request: NextRequest): NextResponse {
-  const password = process.env.ADMIN_PASSWORD;
-  if (!password) return unauthorised();
-
-  const header = request.headers.get('authorization');
-  if (!header?.startsWith('Basic ')) return unauthorised();
-
-  let decoded: string;
-  try {
-    decoded = atob(header.slice('Basic '.length));
-  } catch {
-    return unauthorised();
-  }
-
-  // "user:password" — the username is not checked; there is one operator.
-  const supplied = decoded.slice(decoded.indexOf(':') + 1);
-  if (!safeEqual(supplied, password)) return unauthorised();
+  const authorised = isAuthorisedAdmin(
+    request.headers.get('authorization'),
+    process.env.ADMIN_PASSWORD,
+  );
+  if (!authorised) return unauthorised();
 
   const response = NextResponse.next();
   response.headers.set('X-Robots-Tag', 'noindex, nofollow');

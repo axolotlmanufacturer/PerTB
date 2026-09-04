@@ -446,9 +446,18 @@ Therefore:
   Postgres directly, and emit fully-populated `<table>` markup.
 - `FacetRail` is a client component that updates the URL; navigation re-renders
   on the server.
-- `/api/offers` exists for optimistic client-side refetches on facet toggles, so
-  the interaction feels instant, **but the page must be complete and correct with
-  JavaScript disabled**. Verified with `curl` in a test.
+- ~~`/api/offers` exists for optimistic client-side refetches on facet
+  toggles~~ — **removed.** `FacetRail` navigates through the router instead, so
+  the server re-renders and the URL stays shareable, which is strictly better
+  than a JSON refetch: one source of truth for the table, and the shared link
+  carries the filter state. Nothing ever called the route. It was an unused,
+  unauthenticated export of the whole catalogue, and an endpoint nobody uses is
+  an endpoint nobody maintains.
+
+  The property it existed to protect is unchanged and still tested: **the page
+  must be complete and correct with JavaScript disabled**, verified with `curl`
+  in a test and by running the whole Playwright suite a second time with
+  scripting off.
 
 ---
 

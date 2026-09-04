@@ -59,6 +59,13 @@ jobs:
           EBAY_MIN_FEEDBACK_PCT: ${{ vars.EBAY_MIN_FEEDBACK_PCT || '98.5' }}
           EBAY_MIN_FEEDBACK_COUNT: ${{ vars.EBAY_MIN_FEEDBACK_COUNT || '50' }}
 
+          # A sweep that succeeds but writes almost nothing is the failure this
+          # job cannot otherwise tell you about: the table empties on its own
+          # six hours later and nothing raises a hand. Below the floor the run
+          # exits non-zero and reports to Sentry.
+          INGEST_MIN_OFFERS: ${{ vars.INGEST_MIN_OFFERS || '50' }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+
           # Amazon stays false until the account has 10 qualifying sales in the
           # trailing 30 days. A run with this off is a NORMAL run, not a
           # degraded one — see CLAUDE.md §1.4.

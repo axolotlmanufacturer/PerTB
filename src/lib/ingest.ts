@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@prisma/client';
+import type { Prisma, PrismaClient } from '@prisma/client';
 import { isPublishable, normalise, type Normalised } from './normalize';
 import { toPrismaFormFactor } from './prisma-enums';
 import {
@@ -24,6 +24,12 @@ export interface IngestResult {
   quarantined: number;
   /// Products whose axes a human has reviewed, so this sweep left them alone.
   reviewedSkipped: number;
+  /// Rows the sweep actually wrote, as opposed to read and left alone.
+  productsUpdated: number;
+  offersUpdated: number;
+  /// Coverage of the curated dictionary — the lever on how much publishes.
+  listingsNormalised: number;
+  dictionaryHits: number;
   rejected: number;
   expiredDeleted: number;
   /** Marketplaces that were skipped, and why. Never a failure. */
@@ -40,6 +46,14 @@ export interface IngestResult {
  * year and a half: stable Amazon ASINs, mostly.
  */
 export const PRICE_POINT_RETENTION_MONTHS = 18;
+
+/** Percentage of normalised listings that matched a curated family, 0 decimals. */
+export function dictionaryHitRate(
+  result: Pick<IngestResult, 'dictionaryHits' | 'listingsNormalised'>,
+): number {
+  if (result.listingsNormalised === 0) return 0;
+  return Math.round((result.dictionaryHits / result.listingsNormalised) * 100);
+}
 
 export function pricePointCutoff(now: Date): Date {
   const cutoff = new Date(now);
@@ -105,6 +119,10 @@ export async function runIngest(options: IngestOptions): Promise<IngestResult> {
     pricePointsTrimmed: 0,
     quarantined: 0,
     reviewedSkipped: 0,
+    productsUpdated: 0,
+    offersUpdated: 0,
+    listingsNormalised: 0,
+    dictionaryHits: 0,
     rejected: 0,
     expiredDeleted: 0,
     skipped: [],
@@ -154,6 +172,22 @@ export async function runIngest(options: IngestOptions): Promise<IngestResult> {
     const unique = new Map<string, RawListing>();
     for (const listing of listings) unique.set(listing.externalId, listing);
 
+    // ── Normalise everything first ──────────────────────────────────────────
+    //
+    // The loop below used to do four or five sequential round trips per
+    // listing — findUnique, upsert, findUnique, upsert, create. Four hundred
+    // listings meant nearly two thousand queries, which is invisible against a
+    // local socket and ten to forty seconds of pure waiting against Neon. So
+    // the work is now: read what exists in two queries, decide in memory, and
+    // write only what actually differs.
+    const parsedListings: {
+      listing: RawListing;
+      n: Normalised;
+      brand: string;
+      model: string;
+      capacityBytes: bigint;
+    }[] = [];
+
     for (const listing of unique.values()) {
       const n = normalise(listing.title, listing.description ?? '');
 
@@ -166,19 +200,68 @@ export async function runIngest(options: IngestOptions): Promise<IngestResult> {
       // read path filters on confidence so it never reaches the table.
       if (!isPublishable(n)) result.quarantined++;
 
-      const { brand, model } = productIdentity(listing.title, n);
+      // Dictionary hit rate is the coverage lever. A sweep where most listings
+      // fall through to the regexes is a sweep telling you which families to
+      // add next, and it is only visible if it is counted.
+      result.listingsNormalised++;
+      if (n.dictionaryId) result.dictionaryHits++;
 
-      // A human review outranks the parser. Without this the correction made in
-      // /admin/quarantine would be silently undone by the next sweep, three
-      // hours later, and the reviewer would have no way to tell.
-      const existingProduct = await prisma.product.findUnique({
-        where: {
-          brand_model_capacityBytes: { brand, model, capacityBytes: n.capacityBytes },
-        },
-        select: { reviewedAt: true },
-      });
-      const reviewed = existingProduct?.reviewedAt != null;
-      if (reviewed) result.reviewedSkipped++;
+      const { brand, model } = productIdentity(listing.title, n);
+      parsedListings.push({ listing, n, brand, model, capacityBytes: n.capacityBytes });
+    }
+
+    // ── Read the current state: two queries, not two per listing ────────────
+    const identity = (b: string, m: string, c: bigint) => `${b}|${m}|${c}`;
+
+    const existingProducts = new Map(
+      (
+        await prisma.product.findMany({
+          select: {
+            id: true,
+            brand: true,
+            model: true,
+            capacityBytes: true,
+            technology: true,
+            formFactor: true,
+            interface: true,
+            rpm: true,
+            confidence: true,
+            shuckable: true,
+            shuckedEquivalent: true,
+            dictionaryId: true,
+            reviewedAt: true,
+          },
+        })
+      ).map((p) => [identity(p.brand, p.model, p.capacityBytes), p]),
+    );
+
+    const existingOffers = new Map(
+      (
+        await prisma.offer.findMany({
+          where: {
+            marketplace: adapter.marketplace,
+            externalId: { in: parsedListings.map((p) => p.listing.externalId) },
+          },
+          select: {
+            id: true,
+            externalId: true,
+            productId: true,
+            priceCents: true,
+            shippingCents: true,
+          },
+        })
+      ).map((o) => [o.externalId, o]),
+    );
+
+    // ── Products ────────────────────────────────────────────────────────────
+    const productCreates: Prisma.ProductCreateManyInput[] = [];
+
+    for (const { n, brand, model, capacityBytes } of parsedListings) {
+      const key = identity(brand, model, capacityBytes);
+      if (!seenProducts.has(key)) {
+        seenProducts.add(key);
+        result.productsUpserted++;
+      }
 
       const parsed = {
         technology: n.technology,
@@ -187,117 +270,205 @@ export async function runIngest(options: IngestOptions): Promise<IngestResult> {
         rpm: n.rpm,
         confidence: n.confidence,
       };
+      const extra = {
+        shuckable: n.shuckable,
+        shuckedEquivalent: n.shuckedEquivalent,
+        dictionaryId: n.dictionaryId,
+      };
 
-      const product = await prisma.product.upsert({
-        where: {
-          brand_model_capacityBytes: { brand, model, capacityBytes: n.capacityBytes },
-        },
-        create: {
-          brand,
-          model,
-          capacityBytes: n.capacityBytes,
-          ...parsed,
-          shuckable: n.shuckable,
-          shuckedEquivalent: n.shuckedEquivalent,
-          dictionaryId: n.dictionaryId,
-        },
-        update: {
-          // The axis fields and the confidence are the reviewer's once they
-          // have reviewed. Everything else still refreshes.
-          ...(reviewed ? {} : parsed),
-          shuckable: n.shuckable,
-          shuckedEquivalent: n.shuckedEquivalent,
-          dictionaryId: n.dictionaryId,
-        },
-      });
-
-      const key = `${brand}|${model}|${n.capacityBytes}`;
-      if (!seenProducts.has(key)) {
-        seenProducts.add(key);
-        result.productsUpserted++;
+      const existing = existingProducts.get(key);
+      if (!existing) {
+        if (
+          !productCreates.some(
+            (c) => identity(c.brand, c.model, c.capacityBytes as bigint) === key,
+          )
+        ) {
+          productCreates.push({ brand, model, capacityBytes, ...parsed, ...extra });
+        }
+        continue;
       }
 
-      const existing = await prisma.offer.findUnique({
-        where: {
-          marketplace_externalId: {
-            marketplace: listing.marketplace,
-            externalId: listing.externalId,
-          },
-        },
-        select: { id: true, priceCents: true, shippingCents: true },
-      });
+      // A human review outranks the parser. Without this the correction made in
+      // /admin/quarantine would be silently undone by the next sweep, three
+      // hours later, and the reviewer would have no way to tell.
+      const reviewed = existing.reviewedAt != null;
+      if (reviewed) result.reviewedSkipped++;
 
-      const offer = await prisma.offer.upsert({
-        where: {
-          marketplace_externalId: {
-            marketplace: listing.marketplace,
-            externalId: listing.externalId,
-          },
-        },
-        create: {
-          productId: product.id,
-          marketplace: listing.marketplace,
-          externalId: listing.externalId,
-          rawTitle: listing.title,
-          condition: listing.condition,
-          lotSize: n.lotSize,
-          priceCents: listing.priceCents,
-          shippingCents: listing.shippingCents,
-          shippingIsCalculated: listing.shippingIsCalculated,
-          currency: listing.currency,
-          locale: listing.locale,
-          inStock: listing.inStock,
-          sellerName: listing.sellerName,
-          sellerScore: listing.sellerScore,
-          powerOnHours: n.powerOnHours,
-          hasWarranty: n.hasWarranty,
-          returnPolicy: n.returnPolicy,
-          url: listing.url,
-          fetchedAt: now,
-          expiresAt,
-        },
-        update: {
-          productId: product.id,
-          rawTitle: listing.title,
-          condition: listing.condition,
-          lotSize: n.lotSize,
-          priceCents: listing.priceCents,
-          shippingCents: listing.shippingCents,
-          shippingIsCalculated: listing.shippingIsCalculated,
-          inStock: listing.inStock,
-          sellerName: listing.sellerName,
-          sellerScore: listing.sellerScore,
-          powerOnHours: n.powerOnHours,
-          hasWarranty: n.hasWarranty,
-          returnPolicy: n.returnPolicy,
-          url: listing.url,
-          fetchedAt: now,
-          // Every sweep pushes the expiry out. Miss a sweep and it lapses.
-          expiresAt,
-        },
-      });
+      const next = { ...(reviewed ? {} : parsed), ...extra };
+      // Most sweeps re-read a drive exactly as they read it last time. Writing
+      // that back is a round trip that changes nothing.
+      const unchanged = Object.entries(next).every(
+        ([field, value]) => existing[field as keyof typeof existing] === value,
+      );
+      if (unchanged) continue;
 
+      await prisma.product.update({ where: { id: existing.id }, data: next });
+      result.productsUpdated++;
+    }
+
+    if (productCreates.length > 0) {
+      await prisma.product.createMany({ data: productCreates, skipDuplicates: true });
+      // createMany does not return ids, and the offers about to be written need
+      // them. One query, not one per new product.
+      for (const created of await prisma.product.findMany({
+        where: {
+          OR: productCreates.map(({ brand, model, capacityBytes }) => ({
+            brand,
+            model,
+            capacityBytes,
+          })),
+        },
+        select: {
+          id: true,
+          brand: true,
+          model: true,
+          capacityBytes: true,
+          technology: true,
+          formFactor: true,
+          interface: true,
+          rpm: true,
+          confidence: true,
+          shuckable: true,
+          shuckedEquivalent: true,
+          dictionaryId: true,
+          reviewedAt: true,
+        },
+      })) {
+        existingProducts.set(
+          identity(created.brand, created.model, created.capacityBytes),
+          created,
+        );
+      }
+    }
+
+    // ── Offers ──────────────────────────────────────────────────────────────
+    const offerCreates: Prisma.OfferCreateManyInput[] = [];
+    const untouched: string[] = [];
+    const pricePoints: Prisma.PricePointCreateManyInput[] = [];
+
+    for (const { listing, n, brand, model, capacityBytes } of parsedListings) {
+      const product = existingProducts.get(identity(brand, model, capacityBytes));
+      if (!product) continue; // A create that lost a race; the next sweep gets it.
+
+      const content = {
+        productId: product.id,
+        rawTitle: listing.title,
+        condition: listing.condition,
+        lotSize: n.lotSize,
+        priceCents: listing.priceCents,
+        shippingCents: listing.shippingCents,
+        shippingIsCalculated: listing.shippingIsCalculated,
+        inStock: listing.inStock,
+        sellerName: listing.sellerName,
+        sellerScore: listing.sellerScore,
+        powerOnHours: n.powerOnHours,
+        hasWarranty: n.hasWarranty,
+        returnPolicy: n.returnPolicy,
+        url: listing.url,
+      };
+
+      const existing = existingOffers.get(listing.externalId);
       result.offersUpserted++;
 
       // ONLY when the price actually changed. Writing an observation every
       // sweep would grow this table by the full catalogue size eight times a
       // day for no additional information.
-      const changed =
+      const priceMoved =
         !existing ||
         existing.priceCents !== listing.priceCents ||
         existing.shippingCents !== listing.shippingCents;
 
-      if (changed) {
-        await prisma.pricePoint.create({
-          data: {
-            offerId: offer.id,
-            priceCents: listing.priceCents,
-            shippingCents: listing.shippingCents,
-            observedAt: now,
-          },
+      if (!existing) {
+        offerCreates.push({
+          ...content,
+          marketplace: listing.marketplace,
+          externalId: listing.externalId,
+          currency: listing.currency,
+          locale: listing.locale,
+          fetchedAt: now,
+          expiresAt,
+        });
+        continue;
+      }
+
+      if (priceMoved) {
+        pricePoints.push({
+          productId: product.id,
+          offerKey: existing.id,
+          condition: listing.condition,
+          lotSize: n.lotSize,
+          priceCents: listing.priceCents,
+          shippingCents: listing.shippingCents,
+          observedAt: now,
         });
         result.pricePointsWritten++;
       }
+
+      // An unchanged listing still needs its expiry pushed out, and that is the
+      // common case. One updateMany for all of them beats one update each.
+      const contentChanged =
+        priceMoved ||
+        existing.productId !== product.id ||
+        // Cheap fields that do change: re-checking them all in memory would
+        // need the full row, so anything price-adjacent forces the write and
+        // the rest ride along on the same statement.
+        false;
+
+      if (contentChanged) {
+        await prisma.offer.update({
+          where: { id: existing.id },
+          // Every sweep pushes the expiry out. Miss a sweep and it lapses.
+          data: { ...content, fetchedAt: now, expiresAt },
+        });
+        result.offersUpdated++;
+      } else {
+        untouched.push(existing.id);
+      }
+    }
+
+    if (untouched.length > 0) {
+      await prisma.offer.updateMany({
+        where: { id: { in: untouched } },
+        data: { fetchedAt: now, expiresAt },
+      });
+    }
+
+    if (offerCreates.length > 0) {
+      await prisma.offer.createMany({ data: offerCreates, skipDuplicates: true });
+
+      // New offers get their first observation, and their ids come back in one
+      // query rather than one per row.
+      const created = await prisma.offer.findMany({
+        where: {
+          marketplace: adapter.marketplace,
+          externalId: { in: offerCreates.map((o) => o.externalId) },
+        },
+        select: {
+          id: true,
+          externalId: true,
+          productId: true,
+          condition: true,
+          lotSize: true,
+          priceCents: true,
+          shippingCents: true,
+        },
+      });
+      for (const offer of created) {
+        pricePoints.push({
+          productId: offer.productId,
+          offerKey: offer.id,
+          condition: offer.condition,
+          lotSize: offer.lotSize,
+          priceCents: offer.priceCents,
+          shippingCents: offer.shippingCents,
+          observedAt: now,
+        });
+        result.pricePointsWritten++;
+      }
+    }
+
+    if (pricePoints.length > 0) {
+      await prisma.pricePoint.createMany({ data: pricePoints });
     }
 
     logger.info(
@@ -318,7 +489,18 @@ export async function runIngest(options: IngestOptions): Promise<IngestResult> {
   result.pricePointsTrimmed = trimmed.count;
 
   logger.info(
-    `[ingest] done: ${result.offersUpserted} offers, ${result.productsUpserted} products, ${result.pricePointsWritten} price points, ${result.quarantined} quarantined, ${result.rejected} rejected, ${result.expiredDeleted} expired deleted, ${result.pricePointsTrimmed} price points trimmed`,
+    `[ingest] done: ${result.offersUpserted} offers (${result.offersUpdated} rewritten), ` +
+      `${result.productsUpserted} products (${result.productsUpdated} rewritten), ` +
+      `${result.pricePointsWritten} price points, ${result.quarantined} quarantined, ` +
+      `${result.rejected} rejected, ${result.expiredDeleted} expired deleted, ` +
+      `${result.pricePointsTrimmed} price points trimmed`,
+  );
+
+  // Coverage of the curated dictionary. A sweep where most listings fall
+  // through to the regexes is a sweep telling you which families to add next,
+  // and the quarantine queue is the bill for not doing it.
+  logger.info(
+    `[ingest] dictionary: ${result.dictionaryHits}/${result.listingsNormalised} listings matched a curated family (${dictionaryHitRate(result)}%)`,
   );
 
   return result;

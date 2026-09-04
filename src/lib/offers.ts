@@ -55,6 +55,10 @@ export async function loadDriveRows(
       hasWarranty: true,
       returnPolicy: true,
       url: true,
+      // Deliberately createdAt and not fetchedAt: the sweep pushes fetchedAt
+      // forward on every listing it still sees, so it says "we looked", not
+      // "this changed". See freshness.ts.
+      createdAt: true,
       product: {
         select: {
           brand: true,
@@ -102,6 +106,7 @@ export async function loadDriveRows(
     returnPolicy: offer.returnPolicy,
 
     url: offer.url,
+    firstSeenAt: offer.createdAt,
   }));
 }
 

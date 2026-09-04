@@ -61,6 +61,16 @@ export interface DriveRow {
   returnPolicy: string | null;
 
   url: string;
+
+  /**
+   * When this listing was first seen. NOT `fetchedAt`, which every sweep
+   * pushes forward whether anything changed or not.
+   *
+   * The table itself never shows it. It is here because the sitemap needs to
+   * know when a view's content last changed, and a row appearing is one of the
+   * two ways that happens — see freshness.ts.
+   */
+  firstSeenAt: Date;
 }
 
 const TB = 1_000_000_000_000;

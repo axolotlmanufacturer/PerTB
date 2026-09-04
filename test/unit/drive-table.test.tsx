@@ -52,6 +52,7 @@ function row(overrides: Partial<DriveRow> = {}): DriveRow {
     hasWarranty: null,
     returnPolicy: null,
     url: 'https://www.ebay.com/itm/1',
+    firstSeenAt: new Date('2026-01-01T00:00:00Z'),
     ...overrides,
   };
 }

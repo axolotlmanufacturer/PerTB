@@ -126,6 +126,46 @@ test('the sitemap lists the curated routes and no permutations', async ({ reques
   expect(locs.some((l) => l.endsWith('/cheapest-per-tb'))).toBe(true);
 });
 
+test('sitemap lastmod is derived from the data, not stamped with the crawl time', async ({
+  request,
+}) => {
+  const xml = await (await request.get('/sitemap.xml')).text();
+
+  const entries = [...xml.matchAll(/<url>(.*?)<\/url>/gs)].map((m) => {
+    const block = m[1];
+    return {
+      loc: /<loc>([^<]*)<\/loc>/.exec(block)?.[1] ?? '',
+      lastmod: /<lastmod>([^<]*)<\/lastmod>/.exec(block)?.[1] ?? null,
+    };
+  });
+  expect(entries.length).toBeGreaterThanOrEqual(40);
+
+  const parsed = entries
+    .filter((e) => e.lastmod !== null)
+    .map((e) => ({ loc: e.loc, at: Date.parse(e.lastmod as string) }));
+  expect(parsed.length).toBeGreaterThan(0);
+  expect(parsed.every((e) => Number.isFinite(e.at))).toBe(true);
+
+  // A lastmod in the future is not a date, it is a bug.
+  const now = Date.now();
+  expect(parsed.filter((e) => e.at > now).map((e) => e.loc)).toEqual([]);
+
+  // The regression this replaces: `new Date()` gave every table route the same
+  // value, seconds old, on every fetch. An always-current lastmod is not a
+  // freshness signal, and the documented consequence is the crawler ignoring
+  // lastmod for the whole site — including the editorial pages where the date
+  // is real. Two properties are impossible under that bug and hold under a
+  // derived date, so assert both rather than the wall-clock distance, which
+  // would only be testing how old the seed is.
+  const table = parsed.filter((e) => !/\/(guides|legal)(\/|$)/.test(e.loc));
+  expect(table.length).toBeGreaterThan(30);
+
+  // Landings are dated over the rows they actually show, so they diverge.
+  expect(new Set(table.map((e) => e.at)).size).toBeGreaterThan(1);
+  // And a view nothing has happened in keeps an old date.
+  expect(table.some((e) => now - e.at > 24 * 60 * 60 * 1000)).toBe(true);
+});
+
 test('an uncurated slug 404s rather than rendering a thin page', async ({ request }) => {
   // dynamicParams is false: the curated set is the whole set.
   const response = await request.get('/hdd/37tb');

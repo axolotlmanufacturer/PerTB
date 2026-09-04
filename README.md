@@ -268,6 +268,34 @@ waiting for it delays everything.
 
 ### Deviations from the brief
 
+**Sitemap `lastModified` is derived, and omitted where it cannot be.** It was
+`new Date()` on every table route, which tells the crawler all forty-one changed
+on every fetch — not a freshness signal, and the documented consequence is that
+lastmod stops being believed for the whole site. `fetchedAt` and `updatedAt` are
+no better: both move on every sweep for every listing still on sale, because an
+unchanged offer still needs its expiry pushed out. `src/lib/freshness.ts` scores
+each route over the rows that route actually shows, from the two changes that
+leave a durable mark — a listing appearing, and a price moving. A listing
+_disappearing_ leaves none, so the result is a lower bound: honest in the safe
+direction, since under-reporting costs a little crawl freshness and
+over-reporting costs the signal. A view we cannot date carries no date at all.
+
+**The mock prices new enterprise drives at retail.** It used to price them at
+used-market rates and then apply the used discount on top, so every bare
+enterprise drive undercut every shuckable external and `/hdd/shuckable`
+demonstrated the reverse of its own premise. Baselines are now new-retail, and
+the condition discount is two curves rather than one: a used consumer drive
+sells at a modest discount, a datacentre HDD pull at a third of new. Enterprise
+SSDs stay on the consumer curve, priced on remaining write endurance rather than
+hours. Shucking now beats new bare drives and loses to used enterprise pulls,
+which is what the market actually does.
+
+**`pnpm seed` ages its listings and is idempotent.** It created every offer in
+the same millisecond, which made the derived sitemap dates read as `now` for all
+forty-one routes, and it appended price history without clearing the previous
+run's, so seeding twice stacked two fabricated series. Listings are now aged to
+the depth of their own price series, and the backfill clears first.
+
 **The table is paged, 100 rows to a page.** Every group used to go into one
 document; a real two-marketplace catalogue is thousands, and document size and
 LCP degrade linearly with it. Client-side virtualisation would break the

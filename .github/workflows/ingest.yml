@@ -18,6 +18,14 @@ concurrency:
   group: ingest
   cancel-in-progress: false
 
+# The default token is read-only on this repository, so the failure handler
+# below — which is the whole alerting mechanism — was silently 403ing on every
+# run. issues:write is the permission it needs; contents:read is what checkout
+# needs, and naming it keeps the rest of the token narrow.
+permissions:
+  contents: read
+  issues: write
+
 jobs:
   ingest:
     name: Sweep and refresh
@@ -25,24 +33,53 @@ jobs:
     timeout-minutes: 30
 
     steps:
+      # Before the site is deployed there is no database to sweep into, and
+      # every one of the eight daily runs failed on `prisma migrate deploy`.
+      # That is not an outage, and treating it as one is actively harmful: an
+      # alert that fires eight times a day for a known non-problem is an alert
+      # nobody reads, and the thing it exists to catch — a sweep that stops
+      # working once the site is live — looks exactly the same.
+      #
+      # The safety property is that this can only ever skip an UNCONFIGURED
+      # deployment. Once DATABASE_URL exists the job takes the real path on
+      # every run, so a genuine failure still alerts. The skip is a warning
+      # rather than a notice so it stays visible in the run list.
+      - name: Check the deployment is configured
+        id: configured
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo "::warning title=Ingest skipped::DATABASE_URL is not set, so there is no database to sweep into. This is the expected state before the site is deployed. Set the DATABASE_URL secret to enable the 3-hourly sweep."
+          else
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.configured.outputs.ready == 'true'
 
       - uses: pnpm/action-setup@v4
+        if: steps.configured.outputs.ready == 'true'
 
       - uses: actions/setup-node@v4
+        if: steps.configured.outputs.ready == 'true'
         with:
           node-version: 22
           cache: pnpm
 
       - name: Install
+        if: steps.configured.outputs.ready == 'true'
         run: pnpm install --frozen-lockfile
 
       - name: Apply migrations
+        if: steps.configured.outputs.ready == 'true'
         run: pnpm db:deploy
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Ingest
+        if: steps.configured.outputs.ready == 'true'
         run: pnpm ingest
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -82,25 +119,54 @@ jobs:
 
       # A failed sweep is not cosmetic: offers expire on a 6-hour TTL, so two
       # consecutive failures start emptying the table.
+      #
+      # ONE issue per outage, not one per sweep. At eight sweeps a day an
+      # undeduplicated handler buries the signal it exists to raise, and an
+      # inbox of identical issues gets muted — after which the alert is worse
+      # than useless, because it looks like it is working. Subsequent failures
+      # comment on the open issue instead, so the thread shows how long the
+      # outage has been running. Closing the issue arms it again.
       - name: Report failure
-        if: failure()
+        if: failure() && steps.configured.outputs.ready == 'true'
         uses: actions/github-script@v7
         with:
           script: |
-            const run = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: `Ingest failed: ${new Date().toISOString().slice(0, 16).replace('T', ' ')}Z`,
-              body: [
-                'The 3-hourly ingest sweep failed.',
-                '',
-                `Run: ${run}`,
-                '',
-                'Offers carry a 6-hour TTL on eBay and 24 hours on Amazon, and the',
-                'ingest job hard-deletes anything past its expiry. Two consecutive',
-                'failures will start emptying the table — that is correct behaviour',
-                'under the 24-hour rule, not a bug to work around.',
-              ].join('\n'),
-              labels: ['ingest-failure'],
+            const { owner, repo } = context.repo;
+            const run = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+            const at = `${new Date().toISOString().slice(0, 16).replace('T', ' ')}Z`;
+
+            const body = [
+              `The 3-hourly ingest sweep failed at ${at}.`,
+              '',
+              `Run: ${run}`,
+              '',
+              'Offers carry a 6-hour TTL on eBay and 24 hours on Amazon, and the',
+              'ingest job hard-deletes anything past its expiry. Two consecutive',
+              'failures will start emptying the table — that is correct behaviour',
+              'under the 24-hour rule, not a bug to work around.',
+            ].join('\n');
+
+            const open = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: 'open',
+              labels: 'ingest-failure',
+              per_page: 1,
             });
+
+            if (open.data.length > 0) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: open.data[0].number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner,
+                repo,
+                title: `Ingest failing since ${at}`,
+                body,
+                labels: ['ingest-failure'],
+              });
+            }

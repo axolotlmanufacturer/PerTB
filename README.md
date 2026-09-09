@@ -210,6 +210,14 @@ waiting for it delays everything.
 6. Add `DATABASE_URL` and the marketplace credentials to GitHub repository
    secrets — the 3-hourly ingest runs in Actions, not on Vercel.
 
+   **Until `DATABASE_URL` is set, the ingest workflow skips itself** and the run
+   succeeds with a warning saying so. There is no database to sweep into before
+   this step, and a scheduled job that fails eight times a day for a known
+   non-problem trains you to ignore the one alert that matters. The moment the
+   secret exists, every run takes the real path and a genuine failure opens an
+   `ingest-failure` issue — one per outage, with subsequent failures commenting
+   on it rather than filing duplicates.
+
 ### 3. DNS and the first sweep
 
 1. Point the apex and `www` at Vercel; let it issue the certificate. Confirm
